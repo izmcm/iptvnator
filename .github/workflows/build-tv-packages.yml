@@ -1,0 +1,87 @@
+name: Build TV packages
+
+# Builds the TV app for Samsung (unsigned .wgt, signed per TV by Apps2Samsung
+# or TizenBrew at install time) and LG (.ipk), uploads both as workflow
+# artifacts and refreshes the rolling `tv-latest` pre-release so the newest
+# build always has the same download links.
+
+on:
+    push:
+        branches:
+            - tv-standalone
+    workflow_dispatch:
+
+concurrency:
+    group: build-tv-packages-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v6.1.0
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Test the TV app
+              run: pnpm nx run-many -t test,typecheck -p tv,tv-tests --output-style=static
+
+            # tv:package builds, verifies, stages the Tizen input and packs the LG .ipk.
+            - name: Build packages
+              run: pnpm nx run tv:package --output-style=static
+
+            - name: Pack the Samsung widget
+              run: |
+                  mkdir -p out
+                  (cd dist/tv-tizen-input && zip -qr ../../out/IPTVnator-TV.wgt .)
+                  cp dist/tv-package/*.ipk out/IPTVnator-TV.ipk
+                  ls -l out
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v7
+              with:
+                  name: iptvnator-tv-${{ github.sha }}
+                  path: out/
+                  if-no-files-found: error
+
+    release:
+        needs: build
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Download artifacts
+              uses: actions/download-artifact@v8
+              with:
+                  name: iptvnator-tv-${{ github.sha }}
+                  path: out
+
+            - name: Refresh the tv-latest pre-release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPO: ${{ github.repository }}
+                  SHA: ${{ github.sha }}
+              run: |
+                  # Move the tag to this build, then replace the files in place.
+                  gh api -X PATCH "repos/$REPO/git/refs/tags/tv-latest" -f sha="$SHA" -F force=true \
+                    || gh api "repos/$REPO/git/refs" -f ref=refs/tags/tv-latest -f sha="$SHA"
+                  gh release view tv-latest -R "$REPO" >/dev/null 2>&1 \
+                    || gh release create tv-latest -R "$REPO" --prerelease --latest=false \
+                         --title "IPTVnator TV (latest build)" \
+                         --notes "Rolling build of the TV app. Samsung: install IPTVnator-TV.wgt with Apps2Samsung (Custom WGT). LG: install IPTVnator-TV.ipk in developer mode."
+                  gh release upload tv-latest out/* -R "$REPO" --clobber
+                  gh release edit tv-latest -R "$REPO" --notes "Rolling build of the TV app from ${SHA:0:7}. Samsung: install IPTVnator-TV.wgt with Apps2Samsung (Custom WGT). LG: install IPTVnator-TV.ipk in developer mode."
