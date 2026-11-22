@@ -1,6 +1,7 @@
 import { BackendConnection } from './backend-connection';
 import { PhoneSetup } from './phone-setup';
 import { normalizeStalkerMacAddress } from '@iptvnator/shared/interfaces';
+import { detectProviderImportCandidates } from '@iptvnator/shared/interfaces/provider-import';
 import { useState } from 'preact/hooks';
 import {
     httpUrl,
@@ -25,14 +26,31 @@ export function Sources({ tv }: { tv: TvModel }) {
         const rawField = (key: string) => String(values.get(key) ?? '');
         const field = (key: string) => rawField(key).trim();
         const enteredMac = String(values.get('macAddress') ?? '');
+        // An M3U link from an Xtream panel (get.php?username=…&password=…)
+        // becomes an Xtream source: series, VOD details and EPG instead of a flat list.
+        const xtream =
+            type === 'm3u'
+                ? detectProviderImportCandidates(field('url')).find(
+                      (c) =>
+                          c.kind === 'xtream' &&
+                          c.confidence === 'high' &&
+                          c.serverUrl
+                  )
+                : undefined;
         try {
             const source: Source = {
                 id:
                     editing?.id ??
                     `tv-${Date.now()}-${Math.random().toString(36).slice(2)}`,
                 name: field('name'),
-                provider: type,
-                url: httpUrl(field('url')),
+                provider: xtream ? 'xtream' : type,
+                url: httpUrl(xtream?.serverUrl ?? field('url')),
+                ...(xtream
+                    ? {
+                          username: xtream.username ?? '',
+                          password: xtream.password ?? '',
+                      }
+                    : {}),
                 ...(type !== 'm3u'
                     ? {
                           username: field('username'),
