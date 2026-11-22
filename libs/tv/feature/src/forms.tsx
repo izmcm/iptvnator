@@ -148,7 +148,7 @@ export function Sources({ tv }: { tv: TvModel }) {
                 key={`${type}:${editing?.id ?? 'new'}`}
             >
                 <h2>{editing ? 'Edit source' : 'Add a source'}</h2>
-                {tv.data.directMode ? null : <BackendConnection tv={tv} />}
+                <BackendConnection tv={tv} />
                 <label>
                     Name
                     <input name="name" required defaultValue={editing?.name} />
