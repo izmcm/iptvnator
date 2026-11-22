@@ -64,8 +64,13 @@ export function PhoneDirect({ tv }: { tv: TvModel }) {
                     },
                 };
             }
-            await latest.current.tv.saveSource(source, '');
-            setTimeout(() => setOpen(false), 0);
+            // Answer the phone first: saving navigates Home, which unmounts
+            // this screen and stops the server before a reply could be sent.
+            const saved = source;
+            setTimeout(() => {
+                setOpen(false);
+                void latest.current.tv.saveSource(saved, '');
+            }, 500);
             return { status: 200, body: { ok: true } };
         };
         return startLocalSetup(setState, handle);
