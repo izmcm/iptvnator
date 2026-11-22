@@ -81,6 +81,11 @@ export function Settings({
                     >
                         {id === 'connection' ? (
                             <>
+                                <SettingsPreferences
+                                    key={`connection:${phoneRevision}`}
+                                    tv={tv}
+                                    category="connection"
+                                />
                                 <BackendConnection
                                     tv={tv}
                                     label="Backend URL"

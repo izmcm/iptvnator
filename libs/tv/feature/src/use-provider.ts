@@ -37,13 +37,15 @@ export function useProvider(
               active.origin,
           ])
         : '';
-    const connectionKey = `${fingerprint}:${data.backend}:${data.backendToken}`;
+    const backend = data.directMode ? '' : data.backend;
+    const enabled = storageReady && !!active && (data.directMode || !!backend);
+    const connectionKey = `${fingerprint}:${backend}:${data.backendToken}`;
     useEffect(() => {
         setReady(0);
 
         callbacks.current.reset();
         provider.current?.dispose();
-        if (!storageReady || !active || !data.backend) {
+        if (!enabled || !active) {
             setBusy(false);
             return;
         }
@@ -51,7 +53,7 @@ export function useProvider(
         const snapshot = { ...active };
         const client = createProvider(
             snapshot,
-            new ProviderTransport(data.backend, data.backendToken),
+            new ProviderTransport(backend, data.backendToken),
             (source) =>
                 callbacks.current.update((d) => ({
                     ...d,
@@ -95,8 +97,9 @@ export function useProvider(
     }, [
         fingerprint,
         active?.m3uItems,
-        data.backend,
+        backend,
         data.backendToken,
+        enabled,
         storageReady,
         retry,
     ]);
@@ -105,6 +108,6 @@ export function useProvider(
         ready: owner.current === connectionKey ? ready : 0,
         busy,
         connectionKey,
-        enabled: storageReady && !!active && !!data.backend,
+        enabled,
     };
 }

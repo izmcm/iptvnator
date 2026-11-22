@@ -155,6 +155,8 @@ export interface UserData {
     seriesAutoplay: boolean;
     /** Show the "Up next" card near an episode's end; same as desktop. */
     playerUpNextCard: boolean;
+    /** Talk to Xtream/M3U providers from the TV itself, without a backend. */
+    directMode: boolean;
 }
 export const initialData = (): UserData => ({
     sources: [],
@@ -171,6 +173,7 @@ export const initialData = (): UserData => ({
     tmdb: { enabled: false, apiKey: '', language: 'en' },
     seriesAutoplay: true,
     playerUpNextCard: true,
+    directMode: true,
 });
 export const identity = (source: Source, kind: Kind, id: unknown) =>
     JSON.stringify([source.id, source.provider, kind, String(id)]);
@@ -251,6 +254,8 @@ export function hydrateUserData(saved: Partial<UserData>): UserData {
     data.tmdb = { ...initialData().tmdb, ...saved.tmdb };
     data.seriesAutoplay = saved.seriesAutoplay !== false;
     data.playerUpNextCard = saved.playerUpNextCard !== false;
+    // Installs from before direct mode keep using their backend.
+    data.directMode = saved.directMode ?? !saved.backend;
     if (!saved.positions) {
         data.positions = {};
         data.history.forEach((progress) => {
