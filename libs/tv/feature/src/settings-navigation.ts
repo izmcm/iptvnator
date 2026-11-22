@@ -9,6 +9,7 @@ export const settingsCategories = [
     ['appearance', 'Appearance', 'Home composition'],
     ['epg', 'Programme guide', 'Provider schedules'],
     ['playback', 'Playback', 'Autoplay next episode'],
+    ['subtitles', 'Subtitles', 'Addons, colour & size'],
     ['metadata', 'Metadata · TMDB', 'Artwork & descriptions'],
     ['remote', 'Your remote', 'Buttons & navigation'],
     ['about', 'About', 'Version & device information'],

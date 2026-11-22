@@ -12,6 +12,7 @@ import {
 } from './settings-navigation';
 import type { TvModel } from './use-tv';
 import { About, type TvBuildInfo } from './about';
+import { SubtitleSettings } from './subtitle-settings';
 
 export function Settings({
     tv,
@@ -112,6 +113,8 @@ export function Settings({
                                 tv={tv}
                                 category="playback"
                             />
+                        ) : id === 'subtitles' ? (
+                            <SubtitleSettings tv={tv} />
                         ) : id === 'metadata' ? (
                             <TmdbSettings
                                 key={`tmdb:${phoneRevision}`}

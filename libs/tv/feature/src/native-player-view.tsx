@@ -8,6 +8,7 @@ import type { useLiveOverlay } from './live-overlay';
 import type { useSeriesDetails } from './use-series-details';
 import { UpNextCard, useUpNext } from './up-next-card';
 import type { usePlayerControls } from './player-controls';
+import { SubtitleControls, SubtitleOverlay, useSubtitles } from './subtitles';
 
 export function NativePlayerView({
     tv,
@@ -32,6 +33,7 @@ export function NativePlayerView({
 }) {
     const current = tv.playing;
     const element = video.current;
+    const sub = useSubtitles(tv, video);
     const upNext = useUpNext(
         tv,
         video,
@@ -79,6 +81,7 @@ export function NativePlayerView({
             onClick={clickPicture}
         >
             <video ref={video} playsInline preload="metadata" />
+            <SubtitleOverlay tv={tv} sub={sub} />
             {tv.fullscreen && upNext.card ? (
                 <UpNextCard
                     card={upNext.card}
@@ -220,6 +223,7 @@ export function NativePlayerView({
                                     </span>
                                 </>
                             ) : null}
+                            <SubtitleControls sub={sub} />
                             {current?.kind === 'live' ? (
                                 <button
                                     data-focus="player-playlist"

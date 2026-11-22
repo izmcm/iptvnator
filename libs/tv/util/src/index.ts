@@ -1,3 +1,4 @@
+import { defaultSubtitleSettings, type SubtitleSettings } from './subtitles';
 import {
     CatalogSort,
     CatalogSortPreferences,
@@ -157,6 +158,7 @@ export interface UserData {
     playerUpNextCard: boolean;
     /** Talk to Xtream/M3U providers from the TV itself, without a backend. */
     directMode: boolean;
+    subtitles: SubtitleSettings;
 }
 export const initialData = (): UserData => ({
     sources: [],
@@ -174,6 +176,7 @@ export const initialData = (): UserData => ({
     seriesAutoplay: true,
     playerUpNextCard: true,
     directMode: true,
+    subtitles: defaultSubtitleSettings(),
 });
 export const identity = (source: Source, kind: Kind, id: unknown) =>
     JSON.stringify([source.id, source.provider, kind, String(id)]);
@@ -256,6 +259,7 @@ export function hydrateUserData(saved: Partial<UserData>): UserData {
     data.playerUpNextCard = saved.playerUpNextCard !== false;
     // Installs from before direct mode keep using their backend.
     data.directMode = saved.directMode ?? !saved.backend;
+    data.subtitles = { ...defaultSubtitleSettings(), ...saved.subtitles };
     if (!saved.positions) {
         data.positions = {};
         data.history.forEach((progress) => {
@@ -290,6 +294,7 @@ export * from './programme-guide';
 export * from './grid-guide';
 export * from './detail-metadata';
 export * from './watch-state';
+export * from './subtitles';
 export * from './series-continuity';
 export * from './up-next';
 export * from './recent-channels';
