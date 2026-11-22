@@ -37,8 +37,11 @@ export function useProvider(
               active.origin,
           ])
         : '';
-    const backend = data.directMode ? '' : data.backend;
-    const enabled = storageReady && !!active && (data.directMode || !!backend);
+    // The Android APK embeds a backend and announces it (tv-shell/tvapp/tv.js).
+    const shellBackend = (window as { __tvShellBackend?: string })
+        .__tvShellBackend;
+    const backend = shellBackend ?? (data.directMode ? '' : data.backend);
+    const enabled = storageReady && !!active && (!!backend || data.directMode);
     const connectionKey = `${fingerprint}:${backend}:${data.backendToken}`;
     useEffect(() => {
         setReady(0);
