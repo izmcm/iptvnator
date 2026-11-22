@@ -101,6 +101,7 @@ export function verifyTizenPackage(input) {
                 (element) => element.getAttribute('name')
             ).sort(),
             [
+                'http://developer.samsung.com/privilege/network.public',
                 'http://tizen.org/privilege/internet',
                 'http://tizen.org/privilege/tv.inputdevice',
             ]

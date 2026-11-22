@@ -17,6 +17,8 @@
     <content src="index.html" />
     <access origin="*" subdomains="true" />
     <tizen:privilege name="http://tizen.org/privilege/internet" />
+    <!-- network.public: the TV's own address for adding a source from a phone. -->
+    <tizen:privilege name="http://developer.samsung.com/privilege/network.public" />
     <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice" />
     <tizen:setting
         screen-orientation="landscape"

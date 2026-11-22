@@ -1,7 +1,8 @@
 import { BackendConnection } from './backend-connection';
 import { PhoneSetup } from './phone-setup';
 import { normalizeStalkerMacAddress } from '@iptvnator/shared/interfaces';
-import { detectProviderImportCandidates } from '@iptvnator/shared/interfaces/provider-import';
+import { newSourceId, xtreamFromLink } from './source-input';
+import { PhoneDirect } from './phone-direct';
 import { useState } from 'preact/hooks';
 import {
     httpUrl,
@@ -26,29 +27,18 @@ export function Sources({ tv }: { tv: TvModel }) {
         const rawField = (key: string) => String(values.get(key) ?? '');
         const field = (key: string) => rawField(key).trim();
         const enteredMac = String(values.get('macAddress') ?? '');
-        // An M3U link from an Xtream panel (get.php?username=…&password=…)
-        // becomes an Xtream source: series, VOD details and EPG instead of a flat list.
         const xtream =
-            type === 'm3u'
-                ? detectProviderImportCandidates(field('url')).find(
-                      (c) =>
-                          c.kind === 'xtream' &&
-                          c.confidence === 'high' &&
-                          c.serverUrl
-                  )
-                : undefined;
+            type === 'm3u' ? xtreamFromLink(field('url')) : undefined;
         try {
             const source: Source = {
-                id:
-                    editing?.id ??
-                    `tv-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                id: editing?.id ?? newSourceId(),
                 name: field('name'),
                 provider: xtream ? 'xtream' : type,
-                url: httpUrl(xtream?.serverUrl ?? field('url')),
+                url: httpUrl(xtream?.url ?? field('url')),
                 ...(xtream
                     ? {
-                          username: xtream.username ?? '',
-                          password: xtream.password ?? '',
+                          username: xtream.username,
+                          password: xtream.password,
                       }
                     : {}),
                 ...(type !== 'm3u'
@@ -134,7 +124,11 @@ export function Sources({ tv }: { tv: TvModel }) {
                     </div>
                 ))}
             </div>
-            <PhoneSetup tv={tv} />
+            {tv.data.directMode ? (
+                <PhoneDirect tv={tv} />
+            ) : (
+                <PhoneSetup tv={tv} />
+            )}
             <div class="filters">
                 {(['xtream', 'stalker', 'm3u'] as Provider[]).map((p) => (
                     <button
