@@ -1,8 +1,8 @@
 /**
  * A tiny HTTP server on the TV itself, so a phone on the same Wi-Fi can send
- * a source without a backend. Samsung TVs give WebAssembly real sockets
- * (tizentvwasm.SocketsHostBindings); the socket module and its worker come
- * from OpenIPTV (apps/tv/public/phone-setup, MIT). Other platforms report
+ * a source without a backend (idea from OpenIPTV). Samsung TVs expose TCP
+ * sockets to Workers (tizentvwasm.SocketsManager); the server runs in
+ * apps/tv/public/phone-setup/server.worker.js. Other platforms report
  * `unavailable`.
  */
 export const LOCAL_SETUP_PORT = 8977;
@@ -52,7 +52,7 @@ export function startLocalSetup(
         return () => undefined;
     }
     onState({ status: 'starting' });
-    const worker = new Worker('phone-setup/management-socket.worker.js');
+    const worker = new Worker('phone-setup/server.worker.js');
     let stopped = false;
     worker.onmessage = (event: MessageEvent) => {
         const message = event.data ?? {};
