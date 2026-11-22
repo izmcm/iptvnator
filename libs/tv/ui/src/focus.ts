@@ -126,6 +126,21 @@ export function installRemote(
             );
             const index = items.indexOf(from);
             const target = items[index + (direction === 'ArrowRight' ? 1 : -1)];
+            // Left from a row's first item reaches the side menu, like the
+            // rest of the page; other edges keep focus in the row.
+            const menu =
+                !target &&
+                direction === 'ArrowLeft' &&
+                !fullscreen() &&
+                !document.querySelector('[data-tv-modal]')
+                    ? document.querySelector<HTMLElement>(
+                          '[data-focus^="nav:"][aria-current="page"]'
+                      )
+                    : null;
+            if (menu?.offsetWidth) {
+                menu.focus();
+                return;
+            }
             target?.focus();
             target?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
             return;
