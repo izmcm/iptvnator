@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'preact/hooks';
+import { useLayoutEffect, useState } from 'preact/hooks';
 import { restoreFocus } from '@iptvnator/tv/ui';
 import type { RefObject } from 'preact';
 import type { VodSequence } from './use-vod-sequence';
@@ -8,7 +8,8 @@ import type { useLiveOverlay } from './live-overlay';
 import type { useSeriesDetails } from './use-series-details';
 import { UpNextCard, useUpNext } from './up-next-card';
 import type { usePlayerControls } from './player-controls';
-import { SubtitleControls, SubtitleOverlay, useSubtitles } from './subtitles';
+import { SubtitleOverlay, useSubtitles } from './subtitles';
+import { SubtitlePanel } from './subtitle-panel';
 
 export function NativePlayerView({
     tv,
@@ -34,6 +35,7 @@ export function NativePlayerView({
     const current = tv.playing;
     const element = video.current;
     const sub = useSubtitles(tv, video);
+    const [subtitlePanel, setSubtitlePanel] = useState(false);
     const upNext = useUpNext(
         tv,
         video,
@@ -81,7 +83,15 @@ export function NativePlayerView({
             onClick={clickPicture}
         >
             <video ref={video} playsInline preload="metadata" />
-            <SubtitleOverlay tv={tv} sub={sub} />
+            {subtitlePanel && tv.fullscreen ? (
+                <SubtitlePanel
+                    tv={tv}
+                    sub={sub}
+                    close={() => setSubtitlePanel(false)}
+                />
+            ) : (
+                <SubtitleOverlay tv={tv} sub={sub} />
+            )}
             {tv.fullscreen && upNext.card ? (
                 <UpNextCard
                     card={upNext.card}
@@ -92,7 +102,7 @@ export function NativePlayerView({
             {tv.fullscreen ? (
                 <div
                     class={`player-controls ${controls.visible || tv.error ? '' : 'dormant'}`}
-                    hidden={!!overlay.panel}
+                    hidden={!!overlay.panel || subtitlePanel}
                 >
                     <div class="player-top">
                         <button data-focus="player-back" onClick={back}>
@@ -223,7 +233,14 @@ export function NativePlayerView({
                                     </span>
                                 </>
                             ) : null}
-                            <SubtitleControls sub={sub} />
+                            {sub.vod ? (
+                                <button
+                                    data-focus="player-subtitles"
+                                    onClick={() => setSubtitlePanel(true)}
+                                >
+                                    Subtitles · {sub.label}
+                                </button>
+                            ) : null}
                             {current?.kind === 'live' ? (
                                 <button
                                     data-focus="player-playlist"

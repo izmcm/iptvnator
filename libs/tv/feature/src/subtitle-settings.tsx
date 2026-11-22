@@ -1,54 +1,8 @@
 import { useEffect, useState } from 'preact/hooks';
-import { TvSelect } from '@iptvnator/tv/ui';
 import type { SubtitleSettings as Values } from '@iptvnator/tv/util';
 import type { TvModel } from './use-tv';
 
-const choices: {
-    field: 'color' | 'outline' | 'size' | 'position';
-    label: string;
-    options: [string, string][];
-}[] = [
-    {
-        field: 'color',
-        label: 'Text colour',
-        options: [
-            ['#ffffff', 'White'],
-            ['#ffeb3b', 'Yellow'],
-            ['#7fe9ff', 'Cyan'],
-            ['#a5ff7a', 'Green'],
-        ],
-    },
-    {
-        field: 'outline',
-        label: 'Outline colour',
-        options: [
-            ['#000000', 'Black'],
-            ['#404040', 'Dark grey'],
-            ['transparent', 'None'],
-        ],
-    },
-    {
-        field: 'size',
-        label: 'Text size',
-        options: [
-            ['4', 'Small'],
-            ['5', 'Medium'],
-            ['6.5', 'Large'],
-            ['8', 'Extra large'],
-        ],
-    },
-    {
-        field: 'position',
-        label: 'Vertical position',
-        options: [
-            ['3', 'Bottom edge'],
-            ['8', 'Default'],
-            ['14', 'Higher'],
-            ['22', 'Highest'],
-        ],
-    },
-];
-
+/** Where subtitles come from. Their look is adjusted live in the player. */
 export function SubtitleSettings({ tv }: { tv: TvModel }) {
     const persisted = tv.data.subtitles;
     const [values, setValues] = useState<Values>(persisted);
@@ -60,7 +14,14 @@ export function SubtitleSettings({ tv }: { tv: TvModel }) {
     };
     const save = (event: SubmitEvent) => {
         event.preventDefault();
-        tv.update((data) => ({ ...data, subtitles: values }))
+        tv.update((data) => ({
+            ...data,
+            subtitles: {
+                ...data.subtitles,
+                addons: values.addons,
+                languages: values.languages,
+            },
+        }))
             .then(() => setSaved(true))
             .catch(() => tv.setError('Settings could not be saved.'));
     };
@@ -68,8 +29,9 @@ export function SubtitleSettings({ tv }: { tv: TvModel }) {
         <form class="source-form" onSubmit={save}>
             <h2>Subtitles</h2>
             <p class="muted">
-                Films and episodes get subtitles from Stremio addons. In the
-                player, Subtitles switches language and Sub ±0.5s fixes timing.
+                Films and episodes get subtitles from Stremio addons. While
+                watching, open Subtitles to pick a language and adjust size,
+                position, colours and timing with a live preview.
             </p>
             <label>
                 Stremio addon URLs (separate with spaces)
@@ -81,7 +43,7 @@ export function SubtitleSettings({ tv }: { tv: TvModel }) {
                 />
             </label>
             <label>
-                Languages, in order (e.g. pob,por,eng)
+                Preferred languages, in order (e.g. pob,por,eng)
                 <input
                     data-focus="settings:subtitles:languages"
                     value={values.languages}
@@ -91,41 +53,6 @@ export function SubtitleSettings({ tv }: { tv: TvModel }) {
                     autoComplete="off"
                 />
             </label>
-            {choices.map(({ field, label, options }) => (
-                <label key={field}>
-                    {label}
-                    <TvSelect
-                        label={label}
-                        focusKey={`settings:subtitles:${field}`}
-                        value={String(values[field])}
-                        options={options.map(([value, text]) => ({
-                            value,
-                            label: text,
-                        }))}
-                        onChange={(next) =>
-                            change(
-                                field === 'size' || field === 'position'
-                                    ? { [field]: Number(next) }
-                                    : { [field]: next }
-                            )
-                        }
-                    />
-                </label>
-            ))}
-            <p
-                class="subtitle-preview"
-                style={{
-                    background: '#222',
-                    padding: '1rem',
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    fontSize: `${values.size}vh`,
-                    color: values.color,
-                    textShadow: `-2px -2px 0 ${values.outline}, 2px -2px 0 ${values.outline}, -2px 2px 0 ${values.outline}, 2px 2px 0 ${values.outline}`,
-                }}
-            >
-                Subtitle preview
-            </p>
             <button class="primary" data-focus="settings:subtitles:save">
                 Save settings
             </button>

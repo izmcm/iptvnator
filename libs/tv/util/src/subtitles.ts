@@ -1,15 +1,19 @@
 /** Viewer subtitle preferences; addon subtitles follow the Stremio protocol. */
 export interface SubtitleSettings {
-    /** Stremio addon URLs (manifest or base), one per line. */
+    /** Stremio addon URLs (manifest or base), separated by spaces. */
     addons: string;
     /** Preferred addon language codes in order, e.g. "pob,por,eng". */
     languages: string;
     color: string;
     outline: string;
-    /** Font size as a percentage of the screen height. */
-    size: number;
-    /** Distance from the bottom as a percentage of the screen height. */
-    position: number;
+    /** Behind the text; 'transparent' for none. */
+    background: string;
+    /** Text size in percent of the default (5% of the screen height). */
+    scale: number;
+    /** Distance from the bottom in percent of the screen height. */
+    offset: number;
+    /** Text opacity in percent. */
+    opacity: number;
 }
 
 export const defaultSubtitleSettings = (): SubtitleSettings => ({
@@ -17,9 +21,98 @@ export const defaultSubtitleSettings = (): SubtitleSettings => ({
     languages: 'pob,por,eng',
     color: '#ffffff',
     outline: '#000000',
-    size: 5,
-    position: 8,
+    background: 'transparent',
+    scale: 100,
+    offset: 6,
+    opacity: 100,
 });
+
+/** Choices the player's subtitle panel steps through with Left/Right. */
+export const subtitleChoices = {
+    color: ['#ffffff', '#ffeb3b', '#7fe9ff', '#a5ff7a', '#ff9ecb'],
+    outline: ['#000000', '#404040', '#ffffff', 'transparent'],
+    background: [
+        'transparent',
+        'rgba(0,0,0,0.5)',
+        'rgba(0,0,0,0.8)',
+        '#000000',
+    ],
+};
+
+const LANGUAGES: Record<string, string> = {
+    pob: 'Portuguese (Brazil)',
+    por: 'Portuguese',
+    eng: 'English',
+    spa: 'Spanish',
+    spn: 'Spanish (Europe)',
+    fre: 'French',
+    fra: 'French',
+    ger: 'German',
+    deu: 'German',
+    ita: 'Italian',
+    dut: 'Dutch',
+    nld: 'Dutch',
+    pol: 'Polish',
+    rus: 'Russian',
+    ukr: 'Ukrainian',
+    tur: 'Turkish',
+    ara: 'Arabic',
+    heb: 'Hebrew',
+    per: 'Persian',
+    fas: 'Persian',
+    hin: 'Hindi',
+    jpn: 'Japanese',
+    kor: 'Korean',
+    chi: 'Chinese',
+    zho: 'Chinese',
+    ze: 'Chinese (bilingual)',
+    zht: 'Chinese (traditional)',
+    swe: 'Swedish',
+    nor: 'Norwegian',
+    dan: 'Danish',
+    fin: 'Finnish',
+    gre: 'Greek',
+    ell: 'Greek',
+    cze: 'Czech',
+    ces: 'Czech',
+    slo: 'Slovak',
+    slk: 'Slovak',
+    hun: 'Hungarian',
+    rum: 'Romanian',
+    ron: 'Romanian',
+    bul: 'Bulgarian',
+    hrv: 'Croatian',
+    scc: 'Serbian',
+    srp: 'Serbian',
+    slv: 'Slovenian',
+    est: 'Estonian',
+    lav: 'Latvian',
+    lit: 'Lithuanian',
+    vie: 'Vietnamese',
+    tha: 'Thai',
+    ind: 'Indonesian',
+    may: 'Malay',
+    msa: 'Malay',
+    cat: 'Catalan',
+    baq: 'Basque',
+    eus: 'Basque',
+    glg: 'Galician',
+    ice: 'Icelandic',
+    isl: 'Icelandic',
+    alb: 'Albanian',
+    mac: 'Macedonian',
+    bos: 'Bosnian',
+    ben: 'Bengali',
+    tam: 'Tamil',
+    tel: 'Telugu',
+    urd: 'Urdu',
+    tgl: 'Tagalog',
+};
+
+/** Readable name for an OpenSubtitles/ISO 639-2 code; unknown codes stay as is. */
+export function languageName(code: string) {
+    return LANGUAGES[code.toLowerCase()] ?? code.toUpperCase();
+}
 
 export interface SubtitleCue {
     start: number;

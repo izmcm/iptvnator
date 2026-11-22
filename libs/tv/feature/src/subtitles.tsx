@@ -6,10 +6,20 @@ import {
     stremioId,
     type SubtitleOption,
 } from '@iptvnator/tv/data-access';
-import { cueAt, type SubtitleCue } from '@iptvnator/tv/util';
+import {
+    cueAt,
+    languageName,
+    type SubtitleCue,
+    type SubtitleSettings,
+} from '@iptvnator/tv/util';
 import type { TvModel } from './use-tv';
 
-const DELAY_STEP = 0.5;
+export interface SubtitleLanguage {
+    lang: string;
+    name: string;
+    /** Indexes into `options`. */
+    options: number[];
+}
 
 /** Addon subtitles for the playing film or episode, drawn over the video. */
 export function useSubtitles(tv: TvModel, video: RefObject<HTMLVideoElement>) {
@@ -45,7 +55,16 @@ export function useSubtitles(tv: TvModel, video: RefObject<HTMLVideoElement>) {
             .then((list) => {
                 if (abort.signal.aborted) return;
                 setOptions(list);
-                setSelected(list.length ? 0 : -1);
+                // Start with the first preferred language, if any was offered.
+                const preferred = tv.data.subtitles.languages
+                    .split(',')
+                    .map((l) => l.trim().toLowerCase());
+                setSelected(
+                    list.length &&
+                        preferred.includes(list[0].lang.toLowerCase())
+                        ? 0
+                        : -1
+                );
                 setStatus(list.length ? '' : 'None found');
             })
             .catch(() => {
@@ -82,26 +101,62 @@ export function useSubtitles(tv: TvModel, video: RefObject<HTMLVideoElement>) {
             element.removeEventListener('seeked', update);
         };
     }, [cues, delay, video.current]);
+    const languages: SubtitleLanguage[] = [];
+    options.forEach((option, index) => {
+        const lang = option.lang.toLowerCase();
+        let group = languages.find((l) => l.lang === lang);
+        if (!group) {
+            group = { lang, name: languageName(lang), options: [] };
+            languages.push(group);
+        }
+        group.options.push(index);
+    });
     return {
         vod,
         text,
         delay,
-        label: options[selected]?.label ?? (status || 'Off'),
-        // Cycles Off → first option → … → last option → Off.
-        cycle: () =>
-            options.length &&
-            setSelected((i) => (i + 1 >= options.length ? -1 : i + 1)),
-        shift: (direction: 1 | -1) =>
-            setDelay((d) => Math.round((d + direction * DELAY_STEP) * 10) / 10),
+        status,
+        options,
+        languages,
+        selected,
+        label: selected >= 0 ? languageName(options[selected].lang) : 'Off',
+        select: setSelected,
+        setDelay: (seconds: number) =>
+            setDelay(Math.round(seconds * 100) / 100),
     };
 }
 
 export type Subtitles = ReturnType<typeof useSubtitles>;
 
-export function SubtitleOverlay({ tv, sub }: { tv: TvModel; sub: Subtitles }) {
-    if (!tv.fullscreen || !sub.text) return null;
-    const s = tv.data.subtitles;
+export const SUBTITLE_SAMPLE = 'This is how your subtitles will look.';
+
+export function subtitleStyle(s: SubtitleSettings) {
     const o = s.outline;
+    return {
+        fontSize: `${(5 * s.scale) / 100}vh`,
+        color: s.color,
+        opacity: s.opacity / 100,
+        background: s.background,
+        textShadow:
+            o === 'transparent'
+                ? 'none'
+                : `-2px -2px 0 ${o}, 2px -2px 0 ${o}, -2px 2px 0 ${o}, 2px 2px 0 ${o}, 0 0 6px ${o}`,
+    };
+}
+
+/** The current cue, or `preview` text while a style is being adjusted. */
+export function SubtitleOverlay({
+    tv,
+    sub,
+    preview,
+}: {
+    tv: TvModel;
+    sub: Subtitles;
+    preview?: boolean;
+}) {
+    const text = sub.text || (preview ? SUBTITLE_SAMPLE : '');
+    if (!tv.fullscreen || !text) return null;
+    const s = tv.data.subtitles;
     return (
         <div
             class="subtitle-overlay"
@@ -110,42 +165,25 @@ export function SubtitleOverlay({ tv, sub }: { tv: TvModel; sub: Subtitles }) {
                 position: 'absolute',
                 left: '5%',
                 right: '5%',
-                bottom: `${s.position}vh`,
+                bottom: `${s.offset}vh`,
                 textAlign: 'center',
                 pointerEvents: 'none',
-                whiteSpace: 'pre-line',
-                lineHeight: 1.25,
-                fontWeight: 600,
-                fontSize: `${s.size}vh`,
-                color: s.color,
-                textShadow: `-2px -2px 0 ${o}, 2px -2px 0 ${o}, -2px 2px 0 ${o}, 2px 2px 0 ${o}, 0 0 6px ${o}`,
+                zIndex: 3,
             }}
         >
-            {sub.text}
+            <span
+                style={{
+                    ...subtitleStyle(s),
+                    whiteSpace: 'pre-line',
+                    lineHeight: 1.3,
+                    fontWeight: 600,
+                    padding: '0 0.3em',
+                    WebkitBoxDecorationBreak: 'clone',
+                    boxDecorationBreak: 'clone',
+                }}
+            >
+                {text}
+            </span>
         </div>
-    );
-}
-
-export function SubtitleControls({ sub }: { sub: Subtitles }) {
-    if (!sub.vod) return null;
-    const delay = `${sub.delay > 0 ? '+' : ''}${sub.delay.toFixed(1)}s`;
-    return (
-        <>
-            <button data-focus="player-subtitles" onClick={sub.cycle}>
-                Subtitles · {sub.label}
-            </button>
-            <button
-                data-focus="player-subtitles-earlier"
-                onClick={() => sub.shift(-1)}
-            >
-                Sub −0.5s
-            </button>
-            <button
-                data-focus="player-subtitles-later"
-                onClick={() => sub.shift(1)}
-            >
-                Sub +0.5s ({delay})
-            </button>
-        </>
     );
 }

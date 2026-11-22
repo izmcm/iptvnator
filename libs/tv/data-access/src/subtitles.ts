@@ -9,7 +9,8 @@ import { TvMetadata } from './tmdb';
 export interface SubtitleOption {
     url: string;
     lang: string;
-    label: string;
+    /** The addon's name from its manifest, e.g. "OpenSubtitles v3". */
+    addon: string;
 }
 
 const CINEMETA = 'https://v3-cinemeta.strem.io';
@@ -79,7 +80,19 @@ export async function stremioId(
         : imdb;
 }
 
-/** Asks every addon for subtitles, preferred languages first, others dropped. */
+const addonNames = new Map<string, Promise<string>>();
+function addonName(base: string, signal: AbortSignal) {
+    let name = addonNames.get(base);
+    if (!name) {
+        name = json<{ name?: string }>(`${base}/manifest.json`, signal)
+            .then((m) => m.name || new URL(base).hostname)
+            .catch(() => new URL(base).hostname);
+        addonNames.set(base, name);
+    }
+    return name;
+}
+
+/** Every addon's subtitles for the title; preferred languages come first. */
 export async function listSubtitles(
     settings: UserData['subtitles'],
     item: Media,
@@ -87,7 +100,7 @@ export async function listSubtitles(
     signal: AbortSignal
 ): Promise<SubtitleOption[]> {
     const type = item.kind === 'movie' ? 'movie' : 'series';
-    const languages = settings.languages
+    const preferred = settings.languages
         .split(',')
         .map((l) => l.trim().toLowerCase())
         .filter(Boolean);
@@ -96,28 +109,30 @@ export async function listSubtitles(
         .filter(Boolean)
         .map((a) => a.replace(/\/manifest\.json$/, '').replace(/\/+$/, ''));
     const results = await Promise.all(
-        bases.map((base) =>
-            json<{ subtitles?: { url?: string; lang?: string }[] }>(
-                `${base}/subtitles/${type}/${id}.json`,
-                signal
-            ).catch(() => ({ subtitles: [] }))
-        )
-    );
-    const rank = (lang: string) =>
-        languages.length ? languages.indexOf(lang.toLowerCase()) : 0;
-    const all: { url: string; lang: string }[] = [];
-    results.forEach((r) =>
-        (r.subtitles ?? []).forEach((s) => {
-            if (s.url && s.lang && rank(s.lang) >= 0)
-                all.push({ url: s.url, lang: s.lang });
+        bases.map(async (base) => {
+            const [list, addon] = await Promise.all([
+                json<{ subtitles?: { url?: string; lang?: string }[] }>(
+                    `${base}/subtitles/${type}/${id}.json`,
+                    signal
+                ).catch(() => ({ subtitles: [] })),
+                addonName(base, signal),
+            ]);
+            return (list.subtitles ?? [])
+                .filter((s) => s.url && s.lang)
+                .map((s) => ({ url: s.url!, lang: s.lang!, addon }));
         })
     );
-    all.sort((a, b) => rank(a.lang) - rank(b.lang));
-    const count: Record<string, number> = {};
-    return all.map((s) => {
-        count[s.lang] = (count[s.lang] ?? 0) + 1;
-        return { ...s, label: `${s.lang.toUpperCase()} ${count[s.lang]}` };
-    });
+    const rank = (lang: string) => {
+        const at = preferred.indexOf(lang.toLowerCase());
+        return at < 0 ? preferred.length : at;
+    };
+    const all: SubtitleOption[] = [];
+    results.forEach((list) => list.forEach((s) => all.push(s)));
+    // Stable: preferred languages in order, then the rest as the addons sent them.
+    return all
+        .map((s, order) => ({ s, order }))
+        .sort((a, b) => rank(a.s.lang) - rank(b.s.lang) || a.order - b.order)
+        .map(({ s }) => s);
 }
 
 export async function loadSubtitle(
