@@ -33,6 +33,13 @@
         ArrowRight: 39,
         ArrowDown: 40,
     };
+    // The shell keeps its splash until the page reports ready.
+    function ready() {
+        if (window.TvShell && window.TvShell.postMessage)
+            window.TvShell.postMessage(JSON.stringify(['onReady']));
+    }
+    if (document.readyState === 'complete') ready();
+    else window.addEventListener('load', ready);
     window.__tvShell = {
         back: function () {
             return press(461, 'GoBack');
