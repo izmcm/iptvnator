@@ -9,6 +9,8 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 WWW="$HERE/../android/app/src/main/assets/www"
 rm -f "$WWW/appinfo.json" "$WWW/large-icon.png" # LG metadata
 cp "$HERE/../tvapp/tv.js" "$HERE/../android/app/src/main/assets/tvshell/tv.js"
+# The TV app's icon and banner (apps/tv/make-icons.mjs) instead of the PWA's.
+cp -R "$HERE/../tvapp/res/." "$HERE/../android/app/src/main/res/"
 # The shell injects tv.js as a deferred script after the app's own; load it
 # first so the app sees the embedded backend from its very first render.
 sed -i.bak 's#<head>#<head><script src="tvshell/tv.js"></script>#' "$WWW/index.html"

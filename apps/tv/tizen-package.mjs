@@ -26,6 +26,9 @@ export function stageTizenPackage(workspace) {
                 file.split(/[\\/]/).pop()
             ),
     });
+    // Samsung shows the widget icon large: use the 512 px one (make-icons.mjs).
+    const tizenIcon = resolve(workspace, 'apps/tv/tizen/icon.png');
+    if (existsSync(tizenIcon)) cpSync(tizenIcon, input + '/icon.png');
     const template = readFileSync(
         resolve(workspace, 'apps/tv/tizen/config.xml'),
         'utf8'
