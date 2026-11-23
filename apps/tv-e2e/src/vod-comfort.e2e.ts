@@ -315,7 +315,9 @@ test('TV Up next can be reached again by remote and Back dismisses it first', as
     await page.locator('[data-focus="detail-play"]').click();
     await expect(card).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.locator('.player-bottom')).toContainText('The crossing');
+    await expect(page.locator('.player-controls')).toContainText(
+        'The crossing'
+    );
 });
 
 for (const replay of [false, true])
@@ -360,7 +362,7 @@ for (const replay of [false, true])
                 )
                 .toBeGreaterThan(0.1);
             await endedUnknown(page);
-            await expect(page.locator('.player-bottom')).toContainText(
+            await expect(page.locator('.player-controls')).toContainText(
                 'Finding the next episode'
             );
             if (replay) {
@@ -427,7 +429,7 @@ for (const replay of [false, true])
             await expect(
                 page.locator('[data-focus="player-next"]')
             ).toContainText('S2 · E1');
-            await expect(page.locator('.player-bottom')).toContainText(
+            await expect(page.locator('.player-controls')).toContainText(
                 'The crossing'
             );
             if (replay) {
@@ -437,7 +439,7 @@ for (const replay of [false, true])
                     ).releaseReplaySave?.()
                 );
                 await expect(video).toHaveJSProperty('ended', false);
-                await expect(page.locator('.player-bottom')).toContainText(
+                await expect(page.locator('.player-controls')).toContainText(
                     'The crossing'
                 );
             } else {
@@ -445,7 +447,7 @@ for (const replay of [false, true])
                     Reflect.deleteProperty(document, 'hidden');
                     document.dispatchEvent(new Event('visibilitychange'));
                 });
-                await expect(page.locator('.player-bottom')).toContainText(
+                await expect(page.locator('.player-controls')).toContainText(
                     'Arrival'
                 );
             }
@@ -482,7 +484,7 @@ test('TV VOD comfort series Start, ended, explicit Next and Home advance across 
     );
     const firstUrl = await video.getAttribute('src');
     await endedUnknown(page);
-    await expect(page.locator('.player-bottom')).toContainText(
+    await expect(page.locator('.player-controls')).toContainText(
         'Episode finished'
     );
     await expect(video).toHaveAttribute('src', firstUrl!);
@@ -501,7 +503,7 @@ test('TV VOD comfort series Start, ended, explicit Next and Home advance across 
         .toBeGreaterThan(0.1);
     await endedUnknown(page);
     await page.locator('[data-focus="player-next"]').click();
-    await expect(page.locator('.player-bottom')).toContainText('Arrival');
+    await expect(page.locator('.player-controls')).toContainText('Arrival');
     await expect(page.locator('[data-focus="player-next"]')).toHaveCount(0);
     expect(
         await element!.evaluate((v) => v === document.querySelector('video'))
@@ -511,7 +513,7 @@ test('TV VOD comfort series Start, ended, explicit Next and Home advance across 
         .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
         .toBeGreaterThan(0.1);
     await endedUnknown(page);
-    await expect(page.locator('.player-bottom')).toContainText(
+    await expect(page.locator('.player-controls')).toContainText(
         'No next episode was supplied'
     );
     await page.keyboard.press('Escape');
@@ -728,7 +730,7 @@ for (const action of ['app hide', 'seek back'] as const)
             await expect(
                 page.locator('[data-focus="player-next"]')
             ).toBeEnabled();
-            await expect(page.locator('.player-bottom')).toContainText(
+            await expect(page.locator('.player-controls')).toContainText(
                 'Episode 1'
             );
             if (action === 'app hide') {
@@ -736,7 +738,7 @@ for (const action of ['app hide', 'seek back'] as const)
                     Reflect.deleteProperty(document, 'hidden');
                     document.dispatchEvent(new Event('visibilitychange'));
                 });
-                await expect(page.locator('.player-bottom')).toContainText(
+                await expect(page.locator('.player-controls')).toContainText(
                     'Episode 2'
                 );
                 expect(requests).toBe(2);
@@ -834,13 +836,13 @@ test('TV VOD comfort Next resolution failure preserves the current episode and r
     await expect(
         page.getByRole('button', { name: 'Retry playback', exact: true })
     ).toBeVisible();
-    await expect(page.locator('.player-bottom')).toContainText('Episode 1');
+    await expect(page.locator('.player-controls')).toContainText('Episode 1');
     expect(attempts).toBe(1);
     fail = false;
     await page
         .getByRole('button', { name: 'Retry playback', exact: true })
         .click();
-    await expect(page.locator('.player-bottom')).toContainText('Episode 2');
+    await expect(page.locator('.player-controls')).toContainText('Episode 2');
     await expect(next).toContainText('S1 · E3');
     expect(attempts).toBe(2);
     await expect(page.locator('video')).toHaveCount(1);

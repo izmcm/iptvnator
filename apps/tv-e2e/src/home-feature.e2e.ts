@@ -180,7 +180,7 @@ for (const provider of ['xtream', 'stalker'] as const)
         await page.keyboard.press('Escape');
         await expect(page.locator('[data-focus="hero"]')).toBeFocused();
         await page.locator('[data-focus="hero-resume"]').click();
-        await expect(page.locator('.player-bottom h1')).toHaveText(title);
+        await expect(page.locator('.player-media-title')).toHaveText(title);
         await expect
             .poll(() =>
                 page

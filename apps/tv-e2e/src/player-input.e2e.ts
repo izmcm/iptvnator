@@ -69,8 +69,9 @@ test('picture clicks and Space after seeking toggle playback without activating 
     await expect(video).toHaveJSProperty('paused', true);
     await page.keyboard.press('Home');
     await expect(slider).toHaveValue('0');
+    // Right scrubs 10 seconds, like the +10 button.
     await page.keyboard.press('ArrowRight');
-    await expect(slider).toHaveValue('1');
+    await expect(slider).toHaveValue('10');
     await page.keyboard.press('Space');
     await expect(video).toHaveJSProperty('paused', false);
 });

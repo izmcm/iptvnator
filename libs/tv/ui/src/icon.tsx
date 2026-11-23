@@ -12,6 +12,15 @@ const paths: Record<string, string> = {
     'chevron-right': 'M9 5l7 7-7 7',
     check: 'M4 12l5 5L20 6',
     more: 'M5 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2 M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2 M19 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2',
+    play: 'M7 4l13 8-13 8z',
+    pause: 'M8 4v16 M16 4v16',
+    replay: 'M4 12a8 8 0 1 0 2.4-5.7 M4 3.5v5h5',
+    forward: 'M20 12a8 8 0 1 1-2.4-5.7 M20 3.5v5h-5',
+    back: 'M20 12H4 M10 6l-6 6 6 6',
+    episodes: 'M3 8h13v12H3z M7 4h14v12',
+    subtitles: 'M3 5h18v13H9l-4 3v-3H3z M7 10h4 M13 10h4 M7 14h7',
+    next: 'M5 5l10 7-10 7z M19 5v14',
+    previous: 'M19 5L9 12l10 7z M5 5v14',
 };
 export function TvIcon({ name }: { name: string }) {
     return (
