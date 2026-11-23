@@ -26,6 +26,24 @@ TV, browse movies and series, and pick up where you left off.
 > [GitHub Releases](https://github.com/4gray/iptvnator/releases).
 > [Learn about unofficial websites](https://4gray.github.io/iptvnator/blog/beware-unofficial-iptvnator-websites/).
 
+## TV apps in this fork
+
+> [!NOTE]
+> This fork is **based on IPTVnator** and its TV builds are **not official**
+> IPTVnator releases. For the official apps, use the links above.
+
+The TV app runs on its own, with no home server: Xtream and M3U work directly
+from the TV, Xtream M3U links become Xtream sources, sources can be added from
+a phone, and films and episodes get Stremio addon subtitles with live style
+controls. The newest build is always in the
+[`tv-latest` release](https://github.com/izmcm/iptvnator/releases/tag/tv-latest).
+
+| TV | Install |
+| --- | --- |
+| Samsung (Tizen 5.5+, 2020 on) | `IPTVnator-TV.wgt` with Apps2Samsung, see the [Samsung guide](apps/tv/tizen/README.md) |
+| LG (webOS) | `IPTVnator-TV.ipk` in developer mode |
+| Fire TV / Android TV | In the Downloader app: **9239128** for IPTVnator TV (the TV app) or **3355437** for IPTVnator Full (the web app); both can be installed |
+
 ## Download
 
 Get the latest stable desktop release from the

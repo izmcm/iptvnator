@@ -21,6 +21,22 @@ APK
 > outside the project, apply [`TRADEMARK.md`](../TRADEMARK.md) (distinct name
 > and icon).
 
+## Two APKs
+
+The shell can bundle either web app; both install side by side:
+
+| APK | Bundles | Build |
+| --- | --- | --- |
+| **IPTVnator Full** (`org.tvshell.iptvnator`) | the PWA, as described below | `scripts/bundle-pwa.sh dist/apps/web` |
+| **IPTVnator TV** (`org.tvshell.iptvnator.tv`) | the TV app (`apps/tv`), the same as on Samsung and LG | `scripts/bundle-tv-app.sh dist/apps/tv` |
+
+For the TV app, `bundle-tv-app.sh` swaps `tvshell/tv.js` for
+[`tvapp/tv.js`](tvapp/tv.js): it maps Back, Menu and media keys to the TV app's
+key codes and points it at the embedded backend, so Xtream, M3U and Stalker
+work without a home server. Set `TVSHELL_APP_LABEL` and `TVSHELL_APP_ID_SUFFIX`
+(`IPTVnator TV` and `.tv`) when building that APK. The
+`Build TV packages` workflow builds both on every push to `master`.
+
 ## What it does
 
 The Android WebView and the PWA's vertical page scrollers stop at their scroll
