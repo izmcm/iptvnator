@@ -50,7 +50,8 @@ public class ShellApp extends Application {
                 return listening(bound, false);
             }
         }
-        for (int port : new int[] {43330, 43331, 43332, 43333, 43334}) {
+        int base = Prefs.basePort(this);
+        for (int port = base; port < base + 5; port++) {
             if (port == preferred) continue;
             TvShellServer bound = tryBind(prefs, port);
             if (bound == null) continue;

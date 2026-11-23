@@ -19,6 +19,7 @@ public class Prefs {
     private final SharedPreferences prefs;
 
     public Prefs(Context context) {
+        basePort = basePort(context);
         prefs = context.getApplicationContext().getSharedPreferences(NAME, Context.MODE_PRIVATE);
     }
 
@@ -59,8 +60,19 @@ public class Prefs {
     }
 
     public int serverPort() {
-        return prefs.getInt(KEY_SERVER_PORT, 43330);
+        return prefs.getInt(KEY_SERVER_PORT, basePort);
     }
+
+    /**
+     * First loopback port this APK tries. "IPTVnator TV" (package suffix .tv) and
+     * "IPTVnator Full" install side by side; separate ranges keep each one's web
+     * storage origin from being taken by the other on a first start.
+     */
+    public static int basePort(Context context) {
+        return context.getPackageName().endsWith(".tv") ? 43340 : 43330;
+    }
+
+    private final int basePort;
 
     /** False until the first server start persisted the port the web app's storage belongs to. */
     public boolean hasServerPort() {
