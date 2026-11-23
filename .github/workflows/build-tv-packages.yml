@@ -11,6 +11,7 @@ name: Build TV packages
 on:
     push:
         branches:
+            - master
             - tv-standalone
     workflow_dispatch:
 
