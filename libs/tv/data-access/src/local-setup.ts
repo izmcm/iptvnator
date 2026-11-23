@@ -42,10 +42,89 @@ export function tvAddress(): string {
     }
 }
 
+/** Inside the Android APK (tv-shell), which serves the phone page natively. */
+export function shellPhoneSetup(): boolean {
+    return !!(window as { __tvShellBackend?: string }).__tvShellBackend;
+}
+
+/** Where "Add from phone" can run: Samsung TVs and the Android APK. */
+export function localSetupAvailable(): boolean {
+    return shellPhoneSetup() || isPrivateIPv4(tvAddress());
+}
+
+/**
+ * Android APK: tv-shell's PhoneSetup serves the page on the Wi-Fi address and
+ * queues each phone request; the page long-polls for it and posts the reply.
+ */
+function startShellSetup(
+    onState: (state: LocalSetupState) => void,
+    handle: (request: LocalRequest) => Promise<LocalReply>
+): () => void {
+    let stopped = false;
+    const post = (path: string, body: unknown) =>
+        fetch(`/tvshell/phone/${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+    const loop = async () => {
+        while (!stopped) {
+            let next: { id?: string; body?: string };
+            try {
+                next = await (await fetch('/tvshell/phone/next')).json();
+            } catch {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                continue;
+            }
+            if (stopped || !next.id) continue;
+            const reply = await handle({
+                method: 'POST',
+                path: '/api/v1/source',
+                body: next.body ?? '',
+            }).catch((): LocalReply => ({
+                status: 400,
+                body: { error: 'The TV could not save this source.' },
+            }));
+            await post('reply', {
+                id: next.id,
+                status: reply.status,
+                body: JSON.stringify(reply.body),
+            }).catch(() => undefined);
+        }
+    };
+    onState({ status: 'starting' });
+    post('start', {})
+        .then((response) => response.json())
+        .then((result: { url?: string; error?: string }) => {
+            if (stopped) return;
+            if (!result.url) {
+                onState({
+                    status: 'unavailable',
+                    error: result.error ?? 'Phone setup failed.',
+                });
+                return;
+            }
+            onState({ status: 'listening', url: result.url });
+            void loop();
+        })
+        .catch(() => {
+            if (!stopped)
+                onState({
+                    status: 'unavailable',
+                    error: 'Phone setup failed.',
+                });
+        });
+    return () => {
+        stopped = true;
+        void post('stop', {}).catch(() => undefined);
+    };
+}
+
 export function startLocalSetup(
     onState: (state: LocalSetupState) => void,
     handle: (request: LocalRequest) => Promise<LocalReply>
 ): () => void {
+    if (shellPhoneSetup()) return startShellSetup(onState, handle);
     const address = tvAddress();
     if (!isPrivateIPv4(address)) {
         onState({ status: 'unavailable', error: 'No local TV address.' });

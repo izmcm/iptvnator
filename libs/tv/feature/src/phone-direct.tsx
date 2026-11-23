@@ -1,9 +1,8 @@
 import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import {
-    isPrivateIPv4,
+    localSetupAvailable,
     startLocalSetup,
-    tvAddress,
     type LocalReply,
     type LocalRequest,
     type LocalSetupState,
@@ -86,8 +85,8 @@ export function PhoneDirect({ tv }: { tv: TvModel }) {
                 .then(setQr)
                 .catch(() => setQr(''));
     }, [url, code]);
-    // Only Samsung TVs with a local address can serve the phone page.
-    if (!isPrivateIPv4(tvAddress())) return null;
+    // Samsung TVs (Tizen sockets) and the Android APK can serve the phone page.
+    if (!localSetupAvailable()) return null;
     return (
         <section class="phone-setup" aria-label="Add from your phone">
             <h2>Add from your phone</h2>
