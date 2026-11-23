@@ -7,7 +7,8 @@
 .tv-up-next {
     position: absolute;
     right: var(--tv-safe-x);
-    bottom: calc(var(--tv-safe-y) + 280px);
+    /* Just above the player's progress bar and action row. */
+    bottom: calc(var(--tv-safe-y) + 150px);
     z-index: 3;
     display: flex;
     align-items: center;
@@ -119,8 +120,33 @@
  * credits. It keeps focus: OK still plays, Back still hides.
  */
 .tv-up-next--collapsed {
-    padding: var(--tv-space-1) var(--tv-space-3);
-    border-radius: 999px;
+    padding: var(--tv-space-2) var(--tv-space-3);
+    border-color: transparent;
+    border-radius: var(--tv-control-radius);
+    background: var(--tv-text);
+    color: var(--tv-bg);
+}
+
+/* Collapsed reads as a plain "▶ Next episode" button, not a caption. */
+.tv-up-next--collapsed .tv-up-next__eyebrow {
+    display: flex;
+    align-items: center;
+    color: inherit;
+    font-size: var(--tv-type-meta);
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.tv-up-next--collapsed .tv-up-next__eyebrow svg:first-child {
+    width: 28px;
+    height: 28px;
+    margin-right: var(--tv-space-1);
+    fill: currentColor;
+}
+
+.tv-up-next--collapsed .tv-up-next__ring-track {
+    stroke: rgba(0, 0, 0, 0.2);
 }
 
 /* Countdown ring: empties from the moment the card appears to the end. */
