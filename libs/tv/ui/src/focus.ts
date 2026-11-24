@@ -50,7 +50,7 @@ export function restoreFocus(
             (
                 document.querySelector('[data-tv-modal]') ?? document
             ).querySelectorAll<HTMLElement>(selectors)
-        ).filter((e) => !!e.offsetWidth && !e.closest('[hidden]'));
+        ).filter(focusable);
         const target =
             elements.find((e) => e.dataset.focus === key) ??
             elements.find((e) => e.dataset.focus === fallback) ??
@@ -65,6 +65,61 @@ export function restoreFocus(
         }
     });
 }
+/**
+ * Can take focus now. Chromium reports sizes for controls inside a closed
+ * <details> although focus() refuses them, which left Up stuck on a field.
+ */
+function focusable(e: HTMLElement): boolean {
+    if (!e.offsetWidth || !e.offsetHeight || e.closest('[hidden]'))
+        return false;
+    const details = e.closest('details');
+    return !details || details.open || e === details.querySelector('summary');
+}
+
+/** The area Up/Down stay in: the side menu, the page content, a panel or the player. */
+const verticalRegion = (e: Element) =>
+    e.closest('[data-tv-modal], .native-player, nav, main');
+
+/**
+ * Up/Down: the next row in the same area, then the item in it closest to the
+ * current column. With nothing further in that direction the area scrolls, so
+ * text and codes below or above the last control can still be read; only Left
+ * leaves the content for the side menu.
+ */
+function moveVertically(
+    from: HTMLElement,
+    rect: DOMRect,
+    sign: number,
+    candidates: HTMLElement[]
+) {
+    const region = verticalRegion(from);
+    const ahead = candidates
+        .filter((e) => !region || verticalRegion(e) === region)
+        .map((e) => {
+            const r = e.getBoundingClientRect();
+            return {
+                e,
+                gap: Math.max(
+                    0,
+                    sign > 0 ? r.top - rect.bottom : rect.top - r.bottom
+                ),
+                dy: r.top + r.height / 2 - rect.top - rect.height / 2,
+                dx: Math.abs(r.left + r.width / 2 - rect.left - rect.width / 2),
+            };
+        })
+        .filter((c) => c.dy * sign > 3);
+    if (!ahead.length) {
+        const scroller = region?.matches('main') ? region : null;
+        scroller?.scrollBy({ top: sign * scroller.clientHeight * 0.6 });
+        return;
+    }
+    const nearest = Math.min(...ahead.map((c) => c.gap));
+    const row = ahead.filter((c) => c.gap <= nearest + 24);
+    row.sort((a, b) => a.dx - b.dx);
+    row[0].e.focus();
+    row[0].e.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
 export function installRemote(
     back: () => void,
     fullscreen: () => boolean,
@@ -152,19 +207,17 @@ export function installRemote(
                 : document);
         const candidates = Array.from(
             root?.querySelectorAll<HTMLElement>(selectors) ?? []
-        ).filter(
-            (e) =>
-                e !== from &&
-                !!e.offsetWidth &&
-                !!e.offsetHeight &&
-                !e.closest('[hidden]')
-        );
+        ).filter((e) => e !== from && focusable(e));
         if (!from || from === document.body || !from.offsetWidth) {
             candidates[0]?.focus();
             return;
         }
         const rect = from.getBoundingClientRect();
         const sign = /Left|Up/.test(direction) ? -1 : 1;
+        if (!horizontal) {
+            moveVertically(from, rect, sign, candidates);
+            return;
+        }
         let score = Infinity;
         let target: HTMLElement | undefined;
         for (const element of candidates) {
