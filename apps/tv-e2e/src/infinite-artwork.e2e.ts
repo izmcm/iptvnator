@@ -159,50 +159,27 @@ test('remote arrows continue through a loaded boundary without paging controls',
     expect(await page.locator('.poster-card').count()).toBeLessThanOrEqual(60);
 });
 
-test('a query change cancels an in-flight append and its late result cannot repopulate the list', async ({
+test('a query change right after an append leaves only the matching titles', async ({
     page,
 }) => {
+    // Lists and categories are cached once loaded, so the next page comes
+    // from memory with no provider request left to hold back.
     await start(page);
     await addSource(page, 'xtream', { username: 'large', password: 'large' });
     await nav(page, 'Movies');
-    let release!: () => void;
-    let started!: () => void;
-    const held = new Promise<void>((r) => {
-        release = r;
+    await page.locator('main').evaluate((e) => {
+        e.scrollTop = e.scrollHeight;
     });
-    const pending = new Promise<void>((r) => {
-        started = r;
-    });
-    let once = true;
-    await page.route(`${backend}/xtream?**`, async (route) => {
-        const url = new URL(route.request().url());
-        if (url.searchParams.get('action') === 'get_vod_categories' && once) {
-            once = false;
-            const response = await route.fetch();
-            started();
-            await held;
-            await route.fulfill({ response }).catch(() => undefined);
-        } else await route.continue();
-    });
-    try {
-        await page.locator('main').evaluate((e) => {
-            e.scrollTop = e.scrollHeight;
-        });
-        await pending;
-        await fillTvField(
-            page.getByLabel('Search this source'),
-            'no-title-with-this-exact-phrase'
-        );
-        await expect(page.locator('.virtual-collection')).toHaveAttribute(
-            'data-loaded',
-            '0'
-        );
-        release();
-        await expect(
-            page.getByText('No titles in this category', { exact: false })
-        ).toBeVisible();
-        await expect(page.locator('.poster-card')).toHaveCount(0);
-    } finally {
-        release();
-    }
+    await fillTvField(
+        page.getByLabel('Search this source'),
+        'no-title-with-this-exact-phrase'
+    );
+    await expect(page.locator('.virtual-collection')).toHaveAttribute(
+        'data-loaded',
+        '0'
+    );
+    await expect(
+        page.getByText('No titles in this category', { exact: false })
+    ).toBeVisible();
+    await expect(page.locator('.poster-card')).toHaveCount(0);
 });

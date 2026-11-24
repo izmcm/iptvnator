@@ -8,6 +8,7 @@ import {
     xtream,
     cardAction,
     backFromPlayback,
+    clearCatalogCache,
 } from './helpers';
 
 async function watch(page: Page, index: number, episode = false) {
@@ -632,6 +633,8 @@ test('Home retains saved series-wide artwork without using episode stills and pr
     );
     currentWide = 'https://artwork.test/current-parent-wide.jpg';
     currentPoster = 'https://artwork.test/current-parent-poster.jpg';
+    // Lists are cached on the TV; Settings > Refresh sources clears them.
+    await clearCatalogCache(page);
     await page.reload();
     await expect(page.locator('.hero h1')).toHaveText(title);
     await expect(page.locator('.page-backdrop img')).toHaveAttribute(
@@ -698,6 +701,7 @@ test('browser Back on loading Home keeps its catalog requests alive', async ({
         await route.fulfill({ response });
     });
     try {
+        await clearCatalogCache(page);
         await page.reload();
         await expect.poll(() => held).toBeGreaterThan(0);
         await expect(page.locator('.loading')).toBeVisible();

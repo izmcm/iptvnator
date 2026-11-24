@@ -94,6 +94,59 @@ export async function start(page: Page) {
     await expect(
         page.getByRole('heading', { name: 'Sources', exact: true })
     ).toBeVisible();
+    await useBackend(page);
+}
+/**
+ * These flows run against the E2E backend. A fresh TV starts in direct mode,
+ * where the source form has no server field, so switch it off first.
+ */
+export async function useBackend(page: Page) {
+    await page
+        .getByRole('navigation')
+        .getByRole('button', { name: 'Settings', exact: true })
+        .click();
+    await page.getByRole('tab', { name: /^Connection/ }).click();
+    const direct = page.getByLabel('Direct mode (no server)');
+    if (await direct.isChecked()) {
+        await direct.uncheck();
+        await page
+            .locator('form', { has: direct })
+            .getByRole('button', { name: 'Save settings' })
+            .click();
+        await expect(
+            page.getByLabel('Direct mode (no server)')
+        ).not.toBeChecked();
+    }
+    await page
+        .getByRole('navigation')
+        .getByRole('button', { name: 'Sources', exact: true })
+        .click();
+    await expect(
+        page.getByRole('heading', { name: 'Sources', exact: true })
+    ).toBeVisible();
+}
+/** A cold start: empty the TV's cached provider lists (Settings > Refresh sources). */
+export async function clearCatalogCache(page: Page) {
+    await page.evaluate(
+        () =>
+            new Promise<void>((resolve) => {
+                // Clearing works while the app holds the database open;
+                // deleting it would wait for the page to close it.
+                const request = indexedDB.open('iptvnator-tv-catalog', 1);
+                request.onupgradeneeded = () =>
+                    request.result.createObjectStore('lists');
+                request.onerror = () => resolve();
+                request.onsuccess = () => {
+                    const db = request.result;
+                    const tx = db.transaction('lists', 'readwrite');
+                    tx.objectStore('lists').clear();
+                    tx.oncomplete = tx.onerror = () => {
+                        db.close();
+                        resolve();
+                    };
+                };
+            })
+    );
 }
 export async function addSource(
     page: Page,

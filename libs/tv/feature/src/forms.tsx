@@ -3,6 +3,7 @@ import { PhoneSetup } from './phone-setup';
 import { normalizeStalkerMacAddress } from '@iptvnator/shared/interfaces';
 import { newSourceId, xtreamFromLink } from './source-input';
 import { PhoneDirect } from './phone-direct';
+import { shellPhoneSetup } from '@iptvnator/tv/data-access';
 import { useState } from 'preact/hooks';
 import {
     httpUrl,
@@ -148,7 +149,12 @@ export function Sources({ tv }: { tv: TvModel }) {
                 key={`${type}:${editing?.id ?? 'new'}`}
             >
                 <h2>{editing ? 'Edit source' : 'Add a source'}</h2>
-                <BackendConnection tv={tv} />
+                {/* Direct mode needs no server: only Stalker portals do. The
+                    server otherwise lives in Settings > Connection. */}
+                {!shellPhoneSetup() &&
+                (!tv.data.directMode || type === 'stalker') ? (
+                    <BackendConnection tv={tv} />
+                ) : null}
                 <label>
                     Name
                     <input name="name" required defaultValue={editing?.name} />

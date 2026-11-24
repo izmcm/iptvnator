@@ -20,6 +20,7 @@ import {
 } from '@iptvnator/tv/util';
 import type { XtreamVodDetails } from '@iptvnator/shared/interfaces';
 import { ProviderTransport } from './transport';
+import { readCatalog, writeCatalog } from './catalog-cache';
 export class XtreamProvider implements ProviderClient {
     readonly capabilities = {
         live: true,
@@ -29,6 +30,35 @@ export class XtreamProvider implements ProviderClient {
     };
     private client: XtreamClient;
     private catalogs = new Map<string, Record<string, unknown>[]>();
+    private sorted = new Map<string, Media[]>();
+
+    /** Memory, then the TV's catalog cache, then the provider. */
+    private async list(
+        key: string,
+        action: string,
+        signal: AbortSignal
+    ): Promise<Record<string, unknown>[]> {
+        const memory = this.catalogs.get(key);
+        if (memory) return memory;
+        // A changed server or account must not reuse another login's lists.
+        const stored = [
+            this.source.id,
+            this.source.url,
+            this.source.username ?? '',
+            key,
+        ].join('|');
+        const cached = await readCatalog<Record<string, unknown>[]>(stored);
+        if (cached) {
+            this.catalogs.set(key, cached);
+            return cached;
+        }
+        const data = rows(await this.client.request(action, {}, signal));
+        if (!signal.aborted) {
+            this.catalogs.set(key, data);
+            void writeCatalog(stored, data);
+        }
+        return data;
+    }
     constructor(
         private source: Source,
         transport: ProviderTransport
@@ -78,40 +108,46 @@ export class XtreamProvider implements ProviderClient {
         sort: CatalogSort = 'recent'
     ): Promise<Catalog> {
         const type = kind === 'movie' ? 'vod' : kind;
-        const key = type;
-        let data = this.catalogs.get(key);
-        if (!data) {
-            data = rows(
-                await this.client.request(
-                    kind === 'series' ? 'get_series' : `get_${type}_streams`,
-                    {},
-                    signal
-                )
-            );
-            if (!signal.aborted) this.catalogs.set(key, data);
-        }
-        const categories = rows(
-            await this.client.request(`get_${type}_categories`, {}, signal)
-        ).map((r) => ({
+        const [data, categoryRows] = await Promise.all([
+            this.list(
+                type,
+                kind === 'series' ? 'get_series' : `get_${type}_streams`,
+                signal
+            ),
+            this.list(`${type}:categories`, `get_${type}_categories`, signal),
+        ]);
+        const categories = categoryRows.map((r) => ({
             id: text(r.category_id),
             name: text(r.category_name),
         }));
-        const matchesTitle = catalogTitleMatcher(query);
-        const categoryNames = new Map(categories.map((c) => [c.id, c.name]));
-        const items = data
-            .map((r) =>
-                this.media(r, kind, categoryNames.get(text(r.category_id)))
-            )
-            .filter(
-                (m) =>
-                    (!category || m.category === category) &&
-                    matchesTitle(m.title)
+        // Mapping and sorting thousands of entries is costly on a TV: do it
+        // once per list and order, then only filter and slice per page.
+        const order = kind === 'live' ? 'provider' : sort;
+        const sortedKey = `${type}:${order}`;
+        let sorted = this.sorted.get(sortedKey);
+        if (!sorted) {
+            const categoryNames = new Map(
+                categories.map((c) => [c.id, c.name])
             );
+            sorted = sortCatalog(
+                data.map((r) =>
+                    this.media(r, kind, categoryNames.get(text(r.category_id)))
+                ),
+                order
+            );
+            if (!signal.aborted) this.sorted.set(sortedKey, sorted);
+        }
+        const matchesTitle = catalogTitleMatcher(query);
+        const items =
+            !category && !query
+                ? sorted
+                : sorted.filter(
+                      (m) =>
+                          (!category || m.category === category) &&
+                          matchesTitle(m.title)
+                  );
         return {
-            items: sortCatalog(
-                items,
-                kind === 'live' ? 'provider' : sort
-            ).slice(page * 60, (page + 1) * 60),
+            items: items.slice(page * 60, (page + 1) * 60),
             total: items.length,
             page,
             categories,
@@ -239,5 +275,6 @@ export class XtreamProvider implements ProviderClient {
     }
     dispose() {
         this.catalogs.clear();
+        this.sorted.clear();
     }
 }

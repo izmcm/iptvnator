@@ -10,6 +10,7 @@ import {
     fillTvField,
     nav,
     start,
+    useBackend,
 } from './helpers';
 import { enableMarketingTmdb } from './marketing-tmdb';
 
@@ -91,6 +92,7 @@ test('packaged classic script boots and connects from file protocol', async ({
     await expect(
         page.getByRole('heading', { name: 'Sources', exact: true })
     ).toBeVisible();
+    await useBackend(page);
     await addSource(page, 'xtream');
     await expect(page.locator('.hero h1')).not.toHaveText(
         'Make yourself at home.'

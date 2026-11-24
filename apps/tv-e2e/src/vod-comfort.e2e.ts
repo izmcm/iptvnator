@@ -7,6 +7,7 @@ import {
     moreAction,
     nav,
     start,
+    clearCatalogCache,
 } from './helpers';
 
 async function editSaved(
@@ -558,6 +559,7 @@ test('TV VOD comfort Home finds the successor of an old unnamed episode when its
         return route.fallback();
     });
     try {
+        await clearCatalogCache(page);
         await page.reload({ waitUntil: 'domcontentloaded' });
         await expect.poll(() => held).toBe(true);
         await expect(page.locator('.resume-card')).toHaveCount(0);

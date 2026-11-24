@@ -13,6 +13,8 @@ import {
 import type { TvModel } from './use-tv';
 import { About, type TvBuildInfo } from './about';
 import { SubtitleSettings } from './subtitle-settings';
+import { RefreshSources } from './refresh-sources';
+import { shellPhoneSetup } from '@iptvnator/tv/data-access';
 
 export function Settings({
     tv,
@@ -80,8 +82,21 @@ export function Settings({
                             memory.scroll[id] = event.currentTarget.scrollTop;
                         }}
                     >
-                        {id === 'connection' ? (
+                        {id === 'connection' && shellPhoneSetup() ? (
                             <>
+                                <RefreshSources tv={tv} />
+                                <section class="source-form">
+                                    <h2>Connection</h2>
+                                    <p class="muted">
+                                        This app has its own built-in server:
+                                        Xtream, M3U and Stalker sources connect
+                                        without a home server.
+                                    </p>
+                                </section>
+                            </>
+                        ) : id === 'connection' ? (
+                            <>
+                                <RefreshSources tv={tv} />
                                 <SettingsPreferences
                                     key={`connection:${phoneRevision}`}
                                     tv={tv}
