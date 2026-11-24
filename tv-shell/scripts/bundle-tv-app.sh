@@ -9,6 +9,10 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 WWW="$HERE/../android/app/src/main/assets/www"
 rm -f "$WWW/appinfo.json" "$WWW/large-icon.png" # LG metadata
 cp "$HERE/../tvapp/tv.js" "$HERE/../android/app/src/main/assets/tvshell/tv.js"
+# Live channels are HLS and the Android WebView has no native HLS: ship hls.js,
+# loaded by the TV app only there (libs/tv/data-access/src/hls-fallback.ts).
+mkdir -p "$WWW/vendor"
+cp "$HERE/../../node_modules/hls.js/dist/hls.light.min.js" "$WWW/vendor/hls.light.min.js"
 # The TV app's icon and banner (apps/tv/make-icons.mjs) instead of the PWA's.
 cp -R "$HERE/../tvapp/res/." "$HERE/../android/app/src/main/res/"
 # The shell injects tv.js as a deferred script after the app's own; load it

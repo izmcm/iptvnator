@@ -1,4 +1,5 @@
 import { Media, Playback, Progress } from '@iptvnator/tv/util';
+import { attachHls, isHlsUrl, needsHlsJs } from './hls-fallback';
 /** Owns the only native video element. History begins at `playing`, never at intent. */
 export class NativePlayer {
     item?: Media;
@@ -25,6 +26,7 @@ export class NativePlayer {
     };
     private restoreTimer?: ReturnType<typeof setInterval>;
     private generation = 0;
+    private detachHls?: () => void;
     private handlers: Record<string, () => void>;
     constructor(
         readonly video: HTMLVideoElement,
@@ -110,8 +112,22 @@ export class NativePlayer {
         if (item.kind !== 'live' && Number.isFinite(resume) && resume > 0)
             this.startRestore(resume);
         this.confirmed = false;
-        this.setSource(playback.url);
-        this.video.load();
+        // The APK's WebView has no native HLS (live channels): use hls.js there.
+        const detach =
+            isHlsUrl(playback.url) && needsHlsJs(this.video)
+                ? await attachHls(this.video, playback.url, () =>
+                      this.handlers.error()
+                  )
+                : undefined;
+        if (this.generation !== generation) {
+            detach?.();
+            return;
+        }
+        if (detach) this.detachHls = detach;
+        else {
+            this.setSource(playback.url);
+            this.video.load();
+        }
         try {
             await this.video.play();
         } catch (error) {
@@ -172,6 +188,8 @@ export class NativePlayer {
         );
     }
     stop() {
+        this.detachHls?.();
+        this.detachHls = undefined;
         this.persist();
         this.cancelRestore();
         this.item = undefined;
