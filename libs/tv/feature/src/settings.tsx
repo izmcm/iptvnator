@@ -36,14 +36,18 @@ export function Settings({
         >
             <div class="settings-toolbar">
                 <p class="muted">Choose a category to adjust settings.</p>
-                <PhoneSetup
-                    tv={tv}
-                    purpose="settings"
-                    compact
-                    onSettingsApplied={() =>
-                        setPhoneRevision((value) => value + 1)
-                    }
-                />
+                {/* Phone settings pair through a home server; without one
+                    (direct mode, the Android APK) the button could never work. */}
+                {!tv.data.directMode && !shellPhoneSetup() ? (
+                    <PhoneSetup
+                        tv={tv}
+                        purpose="settings"
+                        compact
+                        onSettingsApplied={() =>
+                            setPhoneRevision((value) => value + 1)
+                        }
+                    />
+                ) : null}
             </div>
             <div class="settings-workspace">
                 <div

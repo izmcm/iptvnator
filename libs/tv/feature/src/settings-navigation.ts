@@ -177,6 +177,19 @@ export function useSettingsNavigation(memory: SettingsMemory) {
                         `[data-focus="settings:${next[0]}"]`
                     )
                     ?.focus();
+            else if (key === 'ArrowUp') {
+                // Above the first category: phone setup, then the page's
+                // source picker, which Up could never reach before.
+                const above = [
+                    root.current?.querySelector<HTMLElement>(
+                        '[data-focus="phone-start"]'
+                    ),
+                    document.querySelector<HTMLElement>(
+                        '[data-focus="source-picker"]'
+                    ),
+                ].find((e) => e && available(e));
+                above?.focus();
+            }
         } else if (
             target.closest('.settings-categories') &&
             (key === 'ArrowRight' || key === 'Enter')
