@@ -5,7 +5,7 @@ import type { JSX } from 'preact';
 
 export const settingsCategories = [
     ['connection', 'Connection', 'Home server & diagnostics'],
-    ['library', 'Library & sync', 'Shared sources'],
+    ['library', 'Library & history', 'History & shared sources'],
     ['appearance', 'Appearance', 'Home composition'],
     ['epg', 'Programme guide', 'Provider schedules'],
     ['playback', 'Playback', 'Autoplay next episode'],

@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { LibrarySettings } from './library-settings';
+import { ClearHistory } from './clear-history';
 import { PhoneSetup } from './phone-setup';
 import { BackendConnection } from './backend-connection';
 import { DirectAccessProbe } from './direct-probe';
@@ -113,7 +114,10 @@ export function Settings({
                                 <DirectAccessProbe tv={tv} />
                             </>
                         ) : id === 'library' ? (
-                            <LibrarySettings tv={tv} />
+                            <>
+                                <ClearHistory tv={tv} />
+                                <LibrarySettings tv={tv} />
+                            </>
                         ) : id === 'appearance' ? (
                             <SettingsPreferences
                                 key={`layout:${phoneRevision}`}

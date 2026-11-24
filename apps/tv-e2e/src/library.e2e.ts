@@ -41,7 +41,7 @@ async function put(
 async function connect(page: Page) {
     await nav(page, 'Settings');
     await page
-        .getByRole('tab', { name: 'Library & sync', exact: false })
+        .getByRole('tab', { name: 'Library & history', exact: false })
         .click();
     const pane = page.getByRole('region', { name: 'Server library' });
     await fillTvField(pane.getByLabel('Library server URL'), server);
@@ -309,7 +309,7 @@ test('shared Xtream, Stalker and M3U sources load, retain local identity and sur
     });
     await nav(page, 'Settings');
     await page
-        .getByRole('tab', { name: 'Library & sync', exact: false })
+        .getByRole('tab', { name: 'Library & history', exact: false })
         .click();
     await page.getByRole('button', { name: 'Refresh library now' }).click();
     await expect
@@ -470,7 +470,7 @@ test('a library reply cannot interrupt playback or reconnect after disconnect', 
     await page.keyboard.press('Escape');
     await nav(page, 'Settings');
     await page
-        .getByRole('tab', { name: 'Library & sync', exact: false })
+        .getByRole('tab', { name: 'Library & history', exact: false })
         .click();
     await expect(
         page.getByRole('region', { name: 'Server library' }).getByRole('alert')
