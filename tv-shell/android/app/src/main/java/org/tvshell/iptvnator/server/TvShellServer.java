@@ -153,6 +153,10 @@ public final class TvShellServer extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         String uri = session.getUri();
         try {
+            if (uri.equals("/tvshell/resolve")) {
+                List<String> urls = session.getParameters().get("url");
+                return StreamResolver.handle(urls == null || urls.isEmpty() ? null : urls.get(0));
+            }
             if (uri.startsWith("/tvshell/phone/")) {
                 // The TV app's "Add from phone" (PhoneSetup): tiny JSON bodies only.
                 String body = null;

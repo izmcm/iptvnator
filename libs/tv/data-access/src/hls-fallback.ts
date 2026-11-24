@@ -31,6 +31,24 @@ export function isHlsUrl(url: string): boolean {
     }
 }
 
+/**
+ * Inside the APK, the address after redirects (tv-shell StreamResolver). The
+ * Fire TV WebView's own HLS player refuses http → https redirects, which
+ * Xtream live addresses often use. Elsewhere, or on failure, the URL as is.
+ */
+export async function resolveShellStream(url: string): Promise<string> {
+    if (!(window as HlsWindow).__tvShellBackend) return url;
+    try {
+        const response = await fetch(
+            `/tvshell/resolve?url=${encodeURIComponent(url)}`
+        );
+        const result = (await response.json()) as { url?: string };
+        return typeof result.url === 'string' && result.url ? result.url : url;
+    } catch {
+        return url;
+    }
+}
+
 /** Only inside the APK, and only where the WebView has no native HLS. */
 export function needsHlsJs(video: HTMLVideoElement): boolean {
     return (
