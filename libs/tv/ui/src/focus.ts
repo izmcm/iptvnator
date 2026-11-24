@@ -103,11 +103,17 @@ function moveVertically(
                     0,
                     sign > 0 ? r.top - rect.bottom : rect.top - r.bottom
                 ),
-                dy: r.top + r.height / 2 - rect.top - rect.height / 2,
+                // Another row starts past the current item's middle: cards of
+                // one rail with different heights (a two-line title) stay in
+                // the same row instead of reading as above or below.
+                beyond:
+                    sign > 0
+                        ? r.top >= rect.top + rect.height / 2
+                        : r.bottom <= rect.bottom - rect.height / 2,
                 dx: Math.abs(r.left + r.width / 2 - rect.left - rect.width / 2),
             };
         })
-        .filter((c) => c.dy * sign > 3);
+        .filter((c) => c.beyond);
     if (!ahead.length) {
         const scroller = region?.matches('main') ? region : null;
         scroller?.scrollBy({ top: sign * scroller.clientHeight * 0.6 });
