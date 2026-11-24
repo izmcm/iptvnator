@@ -190,3 +190,34 @@
 .player-actions button[aria-pressed='true'] svg {
     fill: currentColor;
 }
+
+/* Playback errors: the message, then its actions centred in a row of their
+   own, right above the action row, so Up from there reaches Retry first. */
+.player-bottom > .player-error {
+    max-width: 1100px;
+    margin: 0 auto var(--tv-space-3);
+    padding: var(--tv-space-2) var(--tv-space-3);
+    border-radius: var(--tv-control-radius);
+    background: rgba(11, 15, 14, 0.9);
+    text-align: center;
+}
+
+.player-error p {
+    margin: 0 0 var(--tv-space-2);
+}
+
+.player-error-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.player-error-actions > * + * {
+    margin-left: var(--tv-space-2);
+}
+
+.player-controls .player-error-actions button {
+    padding: var(--tv-space-1) var(--tv-space-3);
+    border-radius: var(--tv-control-radius);
+    background: var(--tv-control);
+    white-space: nowrap;
+}

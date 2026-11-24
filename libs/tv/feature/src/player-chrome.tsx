@@ -161,14 +161,18 @@ export function PlayerChrome({
                     <p role="status">Restoring saved position…</p>
                 ) : null}
                 {tv.error ? (
-                    <div role="alert" class="error">
-                        {tv.error}
-                        {tv.errorRetry ? (
-                            <button onClick={tv.errorRetry}>
-                                {tv.errorRetryLabel}
+                    <div role="alert" class="error player-error">
+                        <p>{tv.error}</p>
+                        <div class="player-error-actions" data-tv-horizontal>
+                            {tv.errorRetry ? (
+                                <button onClick={tv.errorRetry}>
+                                    {tv.errorRetryLabel}
+                                </button>
+                            ) : null}
+                            <button onClick={() => tv.setError('')}>
+                                Dismiss
                             </button>
-                        ) : null}
-                        <button onClick={() => tv.setError('')}>Dismiss</button>
+                        </div>
                     </div>
                 ) : null}
                 {!live ? (

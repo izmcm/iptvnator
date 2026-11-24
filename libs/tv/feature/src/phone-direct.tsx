@@ -75,6 +75,13 @@ export function PhoneDirect({ tv }: { tv: TvModel }) {
         return startLocalSetup(setState, handle);
     }, [open]);
     const url = state?.status === 'listening' ? state.url : '';
+    // Bring the QR code and address into view once they exist.
+    useEffect(() => {
+        if (url)
+            document
+                .querySelector('.phone-direct')
+                ?.scrollIntoView({ block: 'center' });
+    }, [url, qr]);
     useEffect(() => {
         setQr('');
         if (url)
