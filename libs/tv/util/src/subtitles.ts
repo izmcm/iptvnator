@@ -133,6 +133,16 @@ function seconds(value: string): number {
     );
 }
 
+/** Drops {\an8}-style and <i>-style tags until none are left ("<<i>i>" too). */
+function stripTags(text: string) {
+    let previous;
+    do {
+        previous = text;
+        text = text.replace(/\{[^}]*\}|<[^>]*>/g, '');
+    } while (text !== previous);
+    return text;
+}
+
 /** Parses SRT and WebVTT. Styling tags are dropped; line breaks are kept. */
 export function parseSubtitles(body: string): SubtitleCue[] {
     const cues: SubtitleCue[] = [];
@@ -147,11 +157,7 @@ export function parseSubtitles(body: string): SubtitleCue[] {
         const [from, to] = lines[at].split('-->');
         const start = seconds(from);
         const end = seconds(to);
-        const text = lines
-            .slice(at + 1)
-            .join('\n')
-            .replace(/\{[^}]*\}|<[^>]*>/g, '')
-            .trim();
+        const text = stripTags(lines.slice(at + 1).join('\n')).trim();
         if (text && start < end) cues.push({ start, end, text });
     }
     return cues.sort((a, b) => a.start - b.start);

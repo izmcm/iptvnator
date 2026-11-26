@@ -11,8 +11,14 @@ import { phoneSource } from './source-input';
 import type { TvModel } from './use-tv';
 
 const MAX_ATTEMPTS = 5;
-const newCode = () =>
-    String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+/** A uniform 6-digit code: values past the last whole 900000 block are redrawn. */
+const newCode = (): string => {
+    const limit = 2 ** 32 - (2 ** 32 % 900000);
+    for (;;) {
+        const value = crypto.getRandomValues(new Uint32Array(1))[0];
+        if (value < limit) return String(100000 + (value % 900000));
+    }
+};
 
 /**
  * Add a source from a phone without a backend: the TV serves a small page on

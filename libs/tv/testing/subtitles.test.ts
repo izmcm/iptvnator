@@ -22,6 +22,10 @@ test('SRT and VTT cues parse with tags removed and line breaks kept', () => {
     assert.deepEqual(parseSubtitles(vtt), [
         { start: 5.25, end: 6, text: 'Short' },
     ]);
+    // Removing one tag must not leave another one behind.
+    const nested =
+        '00:00:01,000 --> 00:00:02,000\n<<i>script>Hi<</i>/script>\n';
+    assert.doesNotMatch(parseSubtitles(nested)[0].text, /</);
 });
 
 test('the visible cue follows time and delay', () => {
