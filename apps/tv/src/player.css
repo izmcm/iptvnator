@@ -129,10 +129,12 @@
     box-shadow: none;
     outline: none;
     border-radius: 3px;
+    /* Played share; player-chrome.tsx overrides it inline. */
+    --progress: 0%;
     background: linear-gradient(
         to right,
-        var(--tv-accent) var(--progress, 0%),
-        rgba(255, 255, 255, 0.3) var(--progress, 0%)
+        var(--tv-accent) var(--progress),
+        rgba(255, 255, 255, 0.3) var(--progress)
     );
     -webkit-appearance: none;
 }
