@@ -1,5 +1,13 @@
 import { expect, test, Page } from '@playwright/test';
-import { fillTvField, backend, nav, stalker, start, xtream } from './helpers';
+import {
+    fillTvField,
+    backend,
+    nav,
+    stalker,
+    start,
+    xtream,
+    useBackend,
+} from './helpers';
 async function connect(page: Page) {
     await start(page);
     await fillTvField(page.getByLabel('IPTVnator backend URL'), backend);
@@ -205,6 +213,7 @@ test('automatic discovery verifies a candidate and manual edits retire its conne
         route.abort()
     );
     await page.goto('/');
+    await useBackend(page);
     await expect(page.locator('.connection-status')).toHaveText('Connected');
     await expect(page.getByLabel('IPTVnator backend URL')).toHaveValue(
         'http://iptvnator.local:3335'
@@ -253,6 +262,7 @@ test('multiple discovered backends require a choice and late checks cannot overr
         route.abort()
     );
     await page.goto('/');
+    await useBackend(page);
     await expect(page.locator('.backend-results button')).toHaveCount(2);
     await expect(page.locator('.connection-status')).toHaveText(
         'Choose your backend below.'

@@ -7,7 +7,7 @@ import {
 } from 'preact/hooks';
 import type { RefObject } from 'preact';
 import { AutoplayStreak } from '@iptvnator/shared/interfaces';
-import { focusKey, restoreFocus } from '@iptvnator/tv/ui';
+import { TvIcon, focusKey, restoreFocus } from '@iptvnator/tv/ui';
 import {
     episodeCode,
     isBackKey,
@@ -311,7 +311,14 @@ export function UpNextCard({
             )}
             <span class="tv-up-next__meta">
                 <span class="tv-up-next__eyebrow">
-                    Up next · {code}
+                    {collapsed ? (
+                        <>
+                            <TvIcon name="play" />
+                            Next episode · {code}
+                        </>
+                    ) : (
+                        <>Up next · {code}</>
+                    )}
                     {card.countdown ? (
                         <>
                             {' '}

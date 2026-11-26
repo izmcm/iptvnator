@@ -1,0 +1,172 @@
+/*
+ * Subtitle panel in the fullscreen player: languages and their tracks side by
+ * side, or the style rows; and the small live-adjust card. Chromium 68: no
+ * flex gap, so spacing uses margins.
+ */
+.subtitle-panel {
+    position: absolute;
+    top: var(--tv-safe-y);
+    left: 50%;
+    z-index: 4;
+    width: 1240px;
+    max-height: calc(100% - 2 * var(--tv-safe-y));
+    margin-left: -620px;
+    padding: var(--tv-space-4);
+    overflow-y: auto;
+    border: 1px solid var(--tv-line);
+    border-radius: var(--tv-control-radius);
+    background: rgba(11, 15, 14, 0.94);
+    color: var(--tv-text);
+}
+
+.subtitle-panel button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: var(--tv-space-1);
+    padding: var(--tv-space-2) var(--tv-space-3);
+    border: 0;
+    border-radius: var(--tv-control-radius);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--tv-type-meta);
+    text-align: left;
+}
+
+.subtitle-panel button[aria-pressed='true'] {
+    background: var(--tv-control);
+}
+
+/* A focused choice is a focused button first, selected or not. */
+.subtitle-panel button[aria-pressed='true']:focus {
+    background: var(--tv-accent);
+    color: var(--tv-on-accent);
+}
+
+/* Focus follows the app: mint fill, dark text (focus.css). Keep what sits
+   inside a focused row readable on mint. */
+.subtitle-panel button:focus .subtitle-count,
+.subtitle-panel button:focus .subtitle-value {
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.subtitle-panel button:focus .subtitle-dot {
+    background: var(--tv-on-accent);
+}
+
+.subtitle-tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--tv-space-3);
+}
+
+.subtitle-tabs button {
+    width: auto;
+    margin: 0 var(--tv-space-1);
+    border-radius: 999px;
+}
+
+.subtitle-columns {
+    display: flex;
+}
+
+.subtitle-column {
+    flex: 1;
+    min-width: 0;
+}
+
+.subtitle-column + .subtitle-column {
+    margin-left: var(--tv-space-4);
+}
+
+.subtitle-column h3 {
+    min-height: 1.2em;
+    margin: 0 0 var(--tv-space-2);
+    color: var(--tv-muted);
+    font-size: var(--tv-type-eyebrow);
+    font-weight: 400;
+}
+
+.subtitle-count {
+    margin-left: auto;
+    padding: 0 var(--tv-space-1);
+    border-radius: 6px;
+    background: var(--tv-control-hover);
+    font-size: var(--tv-type-eyebrow);
+}
+
+.subtitle-dot {
+    width: 12px;
+    height: 12px;
+    margin-left: var(--tv-space-2);
+    border-radius: 50%;
+    background: var(--tv-accent);
+}
+
+.subtitle-count + .subtitle-dot {
+    margin-left: var(--tv-space-2);
+}
+
+.subtitle-style button {
+    justify-content: space-between;
+}
+
+.subtitle-value {
+    display: flex;
+    align-items: center;
+    min-width: 360px;
+    padding: var(--tv-space-1) var(--tv-space-2);
+    border-radius: var(--tv-control-radius);
+    background: var(--tv-control);
+}
+
+.subtitle-swatch {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    margin: 0 var(--tv-space-1);
+    border: 2px solid var(--tv-muted);
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+.subtitle-swatch.none {
+    background: repeating-linear-gradient(
+        45deg,
+        #666 0,
+        #666 4px,
+        #222 4px,
+        #222 8px
+    ) !important;
+}
+
+.subtitle-adjust {
+    position: absolute;
+    top: var(--tv-safe-y);
+    left: 50%;
+    z-index: 4;
+    width: 640px;
+    margin-left: -320px;
+    padding: var(--tv-space-3);
+    border: 1px solid var(--tv-line);
+    border-radius: var(--tv-control-radius);
+    background: rgba(11, 15, 14, 0.9);
+    color: var(--tv-text);
+    font-size: var(--tv-type-body);
+    text-align: center;
+}
+
+.subtitle-adjust > * {
+    display: block;
+}
+
+.subtitle-adjust strong {
+    margin: var(--tv-space-1) 0;
+    font-size: var(--tv-type-heading);
+}
+
+.subtitle-adjust small {
+    color: var(--tv-muted);
+    font-size: var(--tv-type-eyebrow);
+}

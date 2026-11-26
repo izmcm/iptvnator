@@ -1,4 +1,5 @@
 import { httpUrl, Source } from '@iptvnator/tv/util';
+import { directRequest } from './direct';
 export class ProviderRequestError extends Error {
     constructor(
         readonly status: number,
@@ -14,7 +15,8 @@ export class ProviderTransport {
         readonly backend: string,
         private readonly accessToken = ''
     ) {
-        httpUrl(backend);
+        // An empty backend means direct mode: the TV talks to the provider.
+        if (backend) httpUrl(backend);
     }
     private async json(
         url: string,
@@ -89,6 +91,8 @@ export class ProviderTransport {
         endpoint = source.endpoint ?? source.url,
         repaired = false
     ): Promise<unknown> {
+        if (!this.backend)
+            return directRequest(route, params, signal, endpoint);
         const targetId = await this.target(endpoint, signal);
         if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
         const query = new URLSearchParams({ targetId });

@@ -25,7 +25,12 @@ export async function checkHorizontalRail(page: Page, row: Locator) {
     await expect(left).toBeDisabled();
     await expect(right).toBeEnabled();
     await page.keyboard.press('ArrowLeft');
-    await expect(items.first()).toBeFocused();
+    // Left from the first item goes to the side menu where there is one.
+    const menu = page.locator('[data-focus^="nav:"][aria-current="page"]');
+    if (await menu.isVisible()) {
+        await expect(menu).toBeFocused();
+        await items.first().focus();
+    } else await expect(items.first()).toBeFocused();
     for (let index = 1; index < (await items.count()); index++) {
         await page.keyboard.press('ArrowRight');
         await expect(items.nth(index)).toBeFocused();

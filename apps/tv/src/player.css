@@ -1,0 +1,225 @@
+/*
+ * Fullscreen player chrome (player-chrome.tsx): title on top, replay /
+ * play-pause / forward centred, progress and a quiet action row at the
+ * bottom. Overrides the earlier player rules in theme.css. Chromium 68: no
+ * flex gap, so spacing uses margins.
+ */
+.player-controls {
+    background: linear-gradient(
+        rgba(0, 0, 0, 0.7),
+        transparent 22%,
+        transparent 62%,
+        rgba(0, 0, 0, 0.85)
+    );
+}
+
+.player-controls button {
+    min-height: 0;
+    border: 0;
+    background: transparent;
+    color: var(--tv-text);
+    font: inherit;
+}
+
+.player-controls button:focus,
+.player-controls button:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--tv-text);
+}
+
+.player-top {
+    display: flex;
+    align-items: center;
+}
+
+.player-title {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+}
+
+.player-title h1 {
+    display: block;
+    margin: 0;
+    font-family: inherit;
+    overflow: hidden;
+    font-size: var(--tv-type-heading);
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.player-title > span {
+    color: var(--tv-muted);
+    font-size: var(--tv-type-eyebrow);
+}
+
+.player-icon,
+.player-icon-spacer {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.player-controls .player-icon svg {
+    width: 56px;
+    height: 56px;
+}
+
+.player-icon small {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -0.55em 0 0 -0.6em;
+    width: 1.2em;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.player-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    transform: translate(-50%, -50%);
+}
+
+.player-center > * + * {
+    margin-left: 120px;
+}
+
+.player-controls .player-toggle {
+    width: 128px;
+    height: 128px;
+}
+
+.player-controls .player-toggle svg {
+    width: 72px;
+    height: 72px;
+    fill: currentColor;
+}
+
+.player-bottom > [role='status'],
+.player-bottom > .error {
+    margin: 0 0 var(--tv-space-2);
+    font-size: var(--tv-type-meta);
+}
+
+.player-progress {
+    display: flex;
+    align-items: center;
+}
+
+.player-progress input[type='range'] {
+    flex: 1;
+    box-sizing: border-box;
+    height: 6px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    outline: none;
+    border-radius: 3px;
+    /* Played share; player-chrome.tsx overrides it inline. */
+    --progress: 0%;
+    background: linear-gradient(
+        to right,
+        var(--tv-accent) var(--progress),
+        rgba(255, 255, 255, 0.3) var(--progress)
+    );
+    -webkit-appearance: none;
+}
+
+.player-progress input[type='range']::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--tv-accent);
+    -webkit-appearance: none;
+}
+
+.player-progress input[type='range']:focus::-webkit-slider-thumb {
+    width: 34px;
+    height: 34px;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+.player-time {
+    margin-left: var(--tv-space-3);
+    font-size: var(--tv-type-meta);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.player-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--tv-space-3);
+}
+
+.player-actions > * + * {
+    margin-left: var(--tv-space-4);
+}
+
+.player-actions button {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--tv-space-1) var(--tv-space-2);
+    border-radius: var(--tv-control-radius);
+    font-size: var(--tv-type-meta);
+}
+
+.player-actions button svg {
+    width: 32px;
+    height: 32px;
+    margin-right: var(--tv-space-1);
+}
+
+.player-actions button.primary {
+    background: var(--tv-accent);
+    color: var(--tv-on-accent);
+}
+
+.player-actions button[aria-pressed='true'] svg {
+    fill: currentColor;
+}
+
+/* Playback errors: the message, then its actions centred in a row of their
+   own, right above the action row, so Up from there reaches Retry first. */
+.player-bottom > .player-error {
+    max-width: 1100px;
+    margin: 0 auto var(--tv-space-3);
+    padding: var(--tv-space-2) var(--tv-space-3);
+    border-radius: var(--tv-control-radius);
+    background: rgba(11, 15, 14, 0.9);
+    text-align: center;
+}
+
+.player-error p {
+    margin: 0 0 var(--tv-space-2);
+}
+
+.player-error-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.player-error-actions > * + * {
+    margin-left: var(--tv-space-2);
+}
+
+.player-controls .player-error-actions button {
+    padding: var(--tv-space-1) var(--tv-space-3);
+    border-radius: var(--tv-control-radius);
+    background: var(--tv-control);
+    white-space: nowrap;
+}

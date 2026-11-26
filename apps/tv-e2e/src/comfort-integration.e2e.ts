@@ -241,7 +241,7 @@ test('TV daily comfort VOD resume ended Next and Live Previous share one player 
         path: test.info().outputPath('episode-complete.png'),
     });
     await page.locator('[data-focus="player-next"]').click();
-    await expect(page.locator('.player-bottom')).toContainText('New shore');
+    await expect(page.locator('.player-controls')).toContainText('New shore');
     await expect
         .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
         .toBeGreaterThan(0.1);

@@ -1,6 +1,9 @@
 import { BackendConnection } from './backend-connection';
 import { PhoneSetup } from './phone-setup';
 import { normalizeStalkerMacAddress } from '@iptvnator/shared/interfaces';
+import { newSourceId, xtreamFromLink } from './source-input';
+import { PhoneDirect } from './phone-direct';
+import { shellPhoneSetup } from '@iptvnator/tv/data-access';
 import { useState } from 'preact/hooks';
 import {
     httpUrl,
@@ -25,14 +28,20 @@ export function Sources({ tv }: { tv: TvModel }) {
         const rawField = (key: string) => String(values.get(key) ?? '');
         const field = (key: string) => rawField(key).trim();
         const enteredMac = String(values.get('macAddress') ?? '');
+        const xtream =
+            type === 'm3u' ? xtreamFromLink(field('url')) : undefined;
         try {
             const source: Source = {
-                id:
-                    editing?.id ??
-                    `tv-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                id: editing?.id ?? newSourceId(),
                 name: field('name'),
-                provider: type,
-                url: httpUrl(field('url')),
+                provider: xtream ? 'xtream' : type,
+                url: httpUrl(xtream?.url ?? field('url')),
+                ...(xtream
+                    ? {
+                          username: xtream.username,
+                          password: xtream.password,
+                      }
+                    : {}),
                 ...(type !== 'm3u'
                     ? {
                           username: field('username'),
@@ -58,7 +67,10 @@ export function Sources({ tv }: { tv: TvModel }) {
                     : {}),
             };
             setSaving(true);
-            await tv.saveSource(source, httpUrl(field('backend')));
+            await tv.saveSource(
+                source,
+                field('backend') && httpUrl(field('backend'))
+            );
         } catch {
             setFailure(
                 'Check the URL fields. Use HTTP or HTTPS addresses without embedded login credentials.'
@@ -113,7 +125,11 @@ export function Sources({ tv }: { tv: TvModel }) {
                     </div>
                 ))}
             </div>
-            <PhoneSetup tv={tv} />
+            {tv.data.directMode ? (
+                <PhoneDirect tv={tv} />
+            ) : (
+                <PhoneSetup tv={tv} />
+            )}
             <div class="filters">
                 {(['xtream', 'stalker', 'm3u'] as Provider[]).map((p) => (
                     <button
@@ -133,7 +149,12 @@ export function Sources({ tv }: { tv: TvModel }) {
                 key={`${type}:${editing?.id ?? 'new'}`}
             >
                 <h2>{editing ? 'Edit source' : 'Add a source'}</h2>
-                <BackendConnection tv={tv} />
+                {/* Direct mode needs no server: only Stalker portals do. The
+                    server otherwise lives in Settings > Connection. */}
+                {!shellPhoneSetup() &&
+                (!tv.data.directMode || type === 'stalker') ? (
+                    <BackendConnection tv={tv} />
+                ) : null}
                 <label>
                     Name
                     <input name="name" required defaultValue={editing?.name} />

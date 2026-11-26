@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>IPTVnator TV · Add a source</title>
+        <style>
+            :root {
+                color-scheme: dark;
+                font-family: system-ui, sans-serif;
+                background: #0b0f0e;
+                color: #e8efec;
+            }
+            body {
+                margin: 0 auto;
+                max-width: 32rem;
+                padding: 1.25rem 1rem 3rem;
+            }
+            h1 {
+                font-size: 1.4rem;
+                margin: 0 0 0.25rem;
+            }
+            p {
+                color: #9db0a9;
+                margin: 0 0 1.25rem;
+            }
+            label {
+                display: block;
+                font-size: 0.9rem;
+                margin: 0 0 1rem;
+            }
+            input,
+            select,
+            button {
+                box-sizing: border-box;
+                width: 100%;
+                margin-top: 0.35rem;
+                padding: 0.8rem;
+                border-radius: 0.6rem;
+                border: 1px solid #2f3b37;
+                background: #151c1a;
+                color: inherit;
+                font-size: 1rem;
+            }
+            button {
+                background: #7fe0c3;
+                color: #08110e;
+                border: 0;
+                font-weight: 700;
+            }
+            #result {
+                margin-top: 1rem;
+                font-weight: 600;
+            }
+            .ok {
+                color: #7fe0c3;
+            }
+            .error {
+                color: #ff8a80;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Add a source to your TV</h1>
+        <p>
+            Fill this in on your phone and it goes straight to IPTVnator TV. An
+            Xtream M3U link (get.php?username=…) becomes an Xtream source.
+        </p>
+        <form id="form">
+            <label
+                >Type
+                <select name="type" id="type">
+                    <option value="xtream">Xtream (server, username, password)</option>
+                    <option value="m3u">M3U playlist link</option>
+                </select>
+            </label>
+            <label>Name <input name="name" required autocomplete="off" /></label>
+            <label
+                ><span id="url-label">Server URL</span>
+                <input
+                    name="url"
+                    type="url"
+                    required
+                    autocomplete="off"
+                    placeholder="http://provider.example:8080"
+            /></label>
+            <div id="credentials">
+                <label
+                    >Username
+                    <input name="username" autocomplete="off" autocapitalize="off"
+                /></label>
+                <label
+                    >Password
+                    <input name="password" type="password" autocomplete="off"
+                /></label>
+            </div>
+            <label
+                >Code shown on the TV
+                <input
+                    name="code"
+                    id="code"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    required
+                    autocomplete="off"
+            /></label>
+            <button>Send to TV</button>
+            <div id="result" role="status"></div>
+        </form>
+        <script>
+            var form = document.getElementById('form');
+            var type = document.getElementById('type');
+            var result = document.getElementById('result');
+            var code = new URLSearchParams(location.search).get('code');
+            if (code) document.getElementById('code').value = code;
+            function sync() {
+                var m3u = type.value === 'm3u';
+                document.getElementById('credentials').hidden = m3u;
+                document.getElementById('url-label').textContent = m3u
+                    ? 'Playlist URL'
+                    : 'Server URL';
+                form.username.required = form.password.required = !m3u;
+            }
+            type.addEventListener('change', sync);
+            sync();
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                result.className = '';
+                result.textContent = 'Sending…';
+                var body = {};
+                new FormData(form).forEach(function (value, key) {
+                    body[key] = String(value).trim();
+                });
+                fetch('/api/v1/source', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                })
+                    .then(function (response) {
+                        return response.json().then(function (data) {
+                            if (!response.ok) throw new Error(data.error || 'Failed');
+                            result.className = 'ok';
+                            result.textContent =
+                                'Saved on the TV. You can close this page.';
+                            form.querySelector('button').disabled = true;
+                        });
+                    })
+                    .catch(function (error) {
+                        result.className = 'error';
+                        result.textContent = error.message;
+                    });
+            });
+        </script>
+    </body>
+</html>

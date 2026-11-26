@@ -1,3 +1,4 @@
+import { TvIcon } from './icon';
 import {
     mediaTitle,
     progressLabel,
@@ -119,7 +120,7 @@ export function Hero({
                             aria-label="Previous unfinished title"
                             onClick={() => select(index - 1)}
                         >
-                            ←
+                            <TvIcon name="chevron-left" />
                         </button>
                         <span aria-live="polite" aria-atomic="true">
                             {index + 1} / {count}
@@ -129,7 +130,7 @@ export function Hero({
                             aria-label="Next unfinished title"
                             onClick={() => select(index + 1)}
                         >
-                            →
+                            <TvIcon name="chevron-right" />
                         </button>
                     </div>
                 ) : null}

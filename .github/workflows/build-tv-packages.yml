@@ -1,0 +1,180 @@
+name: Build TV packages
+
+# Builds every TV package and refreshes the rolling `tv-latest` pre-release so
+# the newest build always has the same download links:
+#   IPTVnator-TV.wgt   Samsung (unsigned, signed per TV by Apps2Samsung/TizenBrew)
+#   IPTVnator-TV.ipk   LG webOS
+#   IPTVnator-TV.apk   Fire TV / Android TV, the TV app (same as Samsung and LG)
+#   IPTVnator-Full.apk Fire TV / Android TV, the full web app (desktop interface)
+# Both APKs embed the backend, have different package IDs and install side by side.
+
+on:
+    push:
+        branches:
+            - master
+    workflow_dispatch:
+
+concurrency:
+    group: build-tv-packages-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+env:
+    SHELL_DIR: tv-shell
+
+jobs:
+    tv-app:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v6.1.0
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Test the TV app
+              run: pnpm nx run-many -t test,typecheck -p tv,tv-tests --output-style=static
+
+            # tv:package builds, verifies, stages the Tizen input and packs the LG .ipk.
+            - name: Build packages
+              run: pnpm nx run tv:package --output-style=static
+
+            - name: Pack the Samsung widget
+              run: |
+                  mkdir -p out
+                  (cd dist/tv-tizen-input && zip -qr ../../out/IPTVnator-TV.wgt .)
+                  cp dist/tv-package/*.ipk out/IPTVnator-TV.ipk
+                  ls -l out
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v7
+              with:
+                  name: tv-packages-tv-app
+                  path: out/
+                  if-no-files-found: error
+
+    apk:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - variant: tv
+                      label: IPTVnator TV
+                      id-suffix: .tv
+                      file: IPTVnator-TV.apk
+                    - variant: full
+                      label: IPTVnator Full
+                      id-suffix: ''
+                      file: IPTVnator-Full.apk
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v6.1.0
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile --ignore-scripts
+
+            - name: Build and bundle the TV app
+              if: matrix.variant == 'tv'
+              run: |
+                  set -euo pipefail
+                  pnpm nx build tv --output-style=static
+                  "$SHELL_DIR/scripts/bundle-tv-app.sh" dist/apps/tv
+
+            - name: Build and bundle the full web app
+              if: matrix.variant == 'full'
+              env:
+                  BUILD_COMMIT: ${{ github.sha }}
+              run: |
+                  set -euo pipefail
+                  node tools/build/inject-build-commit.mjs
+                  pnpm nx build web --configuration=pwa --output-style=static
+                  "$SHELL_DIR/scripts/bundle-pwa.sh" dist/apps/web
+
+            - name: Set up Java
+              uses: actions/setup-java@v6
+              with:
+                  distribution: temurin
+                  java-version: '17'
+
+            - name: Set up Gradle
+              uses: gradle/actions/setup-gradle@v6
+
+            - name: Install Android 36 SDK and NDK
+              uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+              with:
+                  packages: platforms;android-36 ndk;28.2.13676358
+
+            - name: Build the APK
+              working-directory: ${{ env.SHELL_DIR }}/android
+              env:
+                  TVSHELL_APP_LABEL: ${{ matrix.label }}
+                  TVSHELL_APP_ID_SUFFIX: ${{ matrix.id-suffix }}
+              run: |
+                  set -euo pipefail
+                  # versionCode: commit time in minutes, so every build upgrades the last one.
+                  TVSHELL_VERSION_CODE=$(( $(git log -1 --format=%ct HEAD) / 60 ))
+                  export TVSHELL_VERSION_CODE
+                  ./gradlew --no-daemon :app:assembleRelease
+                  mkdir -p ../../out
+                  cp app/build/outputs/apk/release/app-release.apk "../../out/${{ matrix.file }}"
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v7
+              with:
+                  name: tv-packages-apk-${{ matrix.variant }}
+                  path: out/
+                  if-no-files-found: error
+
+    release:
+        needs: [tv-app, apk]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Download artifacts
+              uses: actions/download-artifact@v8
+              with:
+                  pattern: tv-packages-*
+                  merge-multiple: true
+                  path: out
+
+            - name: Refresh the tv-latest pre-release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPO: ${{ github.repository }}
+                  SHA: ${{ github.sha }}
+              run: |
+                  ls -l out
+                  NOTES="Rolling build of the TV app from ${SHA:0:7}.
+                  - Samsung: IPTVnator-TV.wgt, install with Apps2Samsung (Advanced options > Custom WGT).
+                  - LG: IPTVnator-TV.ipk, install in developer mode.
+                  - Fire TV / Android TV: IPTVnator-TV.apk (TV app) or IPTVnator-Full.apk (full web app); both can be installed at the same time."
+                  # Move the tag to this build, then replace the files in place.
+                  gh api -X PATCH "repos/$REPO/git/refs/tags/tv-latest" -f sha="$SHA" -F force=true \
+                    || gh api "repos/$REPO/git/refs" -f ref=refs/tags/tv-latest -f sha="$SHA"
+                  gh release view tv-latest -R "$REPO" >/dev/null 2>&1 \
+                    || gh release create tv-latest -R "$REPO" --prerelease --latest=false \
+                         --title "IPTVnator TV (latest build)" --notes "$NOTES"
+                  gh release upload tv-latest out/* -R "$REPO" --clobber
+                  gh release edit tv-latest -R "$REPO" --notes "$NOTES"

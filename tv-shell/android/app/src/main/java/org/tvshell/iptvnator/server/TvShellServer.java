@@ -153,6 +153,28 @@ public final class TvShellServer extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         String uri = session.getUri();
         try {
+            if (uri.equals("/tvshell/resolve")) {
+                List<String> urls = session.getParameters().get("url");
+                return StreamResolver.handle(urls == null || urls.isEmpty() ? null : urls.get(0));
+            }
+            if (uri.startsWith("/tvshell/phone/")) {
+                // The TV app's "Add from phone" (PhoneSetup): tiny JSON bodies only.
+                String body = null;
+                if (Method.POST.equals(session.getMethod())) {
+                    String length = session.getHeaders().get("content-length");
+                    long declared;
+                    try {
+                        declared = length == null ? 0 : Long.parseLong(length.trim());
+                    } catch (NumberFormatException e) {
+                        return close(error(Response.Status.BAD_REQUEST, "invalid Content-Length"));
+                    }
+                    if (declared < 0 || declared > MAX_API_BODY_BYTES) {
+                        return close(error(Response.Status.PAYLOAD_TOO_LARGE, "request body too large"));
+                    }
+                    body = readBody(session.getInputStream(), (int) declared);
+                }
+                return PhoneSetup.get(assets).handle(uri, body);
+            }
             if (uri.startsWith("/api")) {
                 String sub = uri.substring(4);
                 String body = null;

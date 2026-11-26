@@ -183,7 +183,7 @@ test('@tmdb credits and season stills/descriptions preserve episode playback and
     // Meaningful provider episode titles are retained.
     expect(title).not.toBe('TMDB episode');
     await page.locator('.episode').first().click();
-    await expect(page.locator('.player-bottom h1')).toHaveText(seriesTitle);
+    await expect(page.locator('.player-media-title')).toHaveText(seriesTitle);
     await expect
         .poll(() =>
             page

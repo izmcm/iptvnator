@@ -11,7 +11,10 @@ android {
     ndkVersion '28.2.13676358'
 
     defaultConfig {
-        applicationId 'org.tvshell.iptvnator'
+        // Two APKs install side by side: "IPTVnator Full" (the PWA, default) and
+        // "IPTVnator TV" (the TV app). CI sets these per variant.
+        applicationId 'org.tvshell.iptvnator' + (System.getenv('TVSHELL_APP_ID_SUFFIX') ?: '')
+        manifestPlaceholders = [appLabel: System.getenv('TVSHELL_APP_LABEL') ?: '@string/app_name']
         minSdk 25          // Fire OS 6 (Android 7.1) and newer
         targetSdk 35
         // CI derives this from the commit time (minutes since the epoch) so every published

@@ -445,8 +445,12 @@ test('closed backend disclosure is excluded from entry and restoration', async (
     await expect(
         page.getByRole('tab', { name: 'Connection', exact: false })
     ).toBeFocused();
+    // Entry lands on the panel's first control, never on the closed token.
     await page.keyboard.press('ArrowRight');
-    await expect(page.getByLabel('Backend URL', { exact: true })).toBeFocused();
+    await expect(
+        page.getByRole('button', { name: 'Refresh sources', exact: true })
+    ).toBeFocused();
+    await page.getByLabel('Backend URL', { exact: true }).focus();
     await page.keyboard.press('ArrowDown');
     await expect(
         page.getByText('Backend access token (if required)', { exact: true })

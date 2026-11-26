@@ -3,8 +3,8 @@ import type { UserData } from '@iptvnator/tv/util';
 import { useEffect, useState } from 'preact/hooks';
 import type { TvModel } from './use-tv';
 
-type Toggle = 'epg' | 'seriesAutoplay' | 'playerUpNextCard';
-type Category = 'layout' | 'epg' | 'playback';
+type Toggle = 'epg' | 'seriesAutoplay' | 'playerUpNextCard' | 'directMode';
+type Category = 'layout' | 'epg' | 'playback' | 'connection';
 type Values = Partial<Pick<UserData, 'layout' | Toggle>>;
 
 const copy: Record<
@@ -24,6 +24,12 @@ const copy: Record<
         title: 'Programme guide',
         description: 'Show programme information supplied by your TV provider.',
         toggles: [{ field: 'epg', label: 'Show provider programme guide' }],
+    },
+    connection: {
+        title: 'Direct mode',
+        description:
+            'Connect to Xtream and M3U providers from this TV, without a server. Stalker portals still need the backend below.',
+        toggles: [{ field: 'directMode', label: 'Direct mode (no server)' }],
     },
     playback: {
         title: 'Playback',

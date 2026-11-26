@@ -140,7 +140,7 @@ for (const index of [30, 120])
         await expect(rail.locator('[data-episode-index="0"]')).toBeVisible();
         await expect(chosen).toBeFocused();
         await page.keyboard.press('Enter');
-        await expect(page.locator('.player-bottom')).toContainText(
+        await expect(page.locator('.player-controls')).toContainText(
             `Anchored episode ${index + 1}`
         );
     });

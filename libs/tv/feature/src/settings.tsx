@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { LibrarySettings } from './library-settings';
+import { ClearHistory } from './clear-history';
 import { PhoneSetup } from './phone-setup';
 import { BackendConnection } from './backend-connection';
 import { DirectAccessProbe } from './direct-probe';
@@ -12,6 +13,9 @@ import {
 } from './settings-navigation';
 import type { TvModel } from './use-tv';
 import { About, type TvBuildInfo } from './about';
+import { SubtitleSettings } from './subtitle-settings';
+import { RefreshSources } from './refresh-sources';
+import { shellPhoneSetup } from '@iptvnator/tv/data-access';
 
 export function Settings({
     tv,
@@ -33,14 +37,18 @@ export function Settings({
         >
             <div class="settings-toolbar">
                 <p class="muted">Choose a category to adjust settings.</p>
-                <PhoneSetup
-                    tv={tv}
-                    purpose="settings"
-                    compact
-                    onSettingsApplied={() =>
-                        setPhoneRevision((value) => value + 1)
-                    }
-                />
+                {/* Phone settings pair through a home server; without one
+                    (direct mode, the Android APK) the button could never work. */}
+                {!tv.data.directMode && !shellPhoneSetup() ? (
+                    <PhoneSetup
+                        tv={tv}
+                        purpose="settings"
+                        compact
+                        onSettingsApplied={() =>
+                            setPhoneRevision((value) => value + 1)
+                        }
+                    />
+                ) : null}
             </div>
             <div class="settings-workspace">
                 <div
@@ -79,8 +87,26 @@ export function Settings({
                             memory.scroll[id] = event.currentTarget.scrollTop;
                         }}
                     >
-                        {id === 'connection' ? (
+                        {id === 'connection' && shellPhoneSetup() ? (
                             <>
+                                <RefreshSources tv={tv} />
+                                <section class="source-form">
+                                    <h2>Connection</h2>
+                                    <p class="muted">
+                                        This app has its own built-in server:
+                                        Xtream, M3U and Stalker sources connect
+                                        without a home server.
+                                    </p>
+                                </section>
+                            </>
+                        ) : id === 'connection' ? (
+                            <>
+                                <RefreshSources tv={tv} />
+                                <SettingsPreferences
+                                    key={`connection:${phoneRevision}`}
+                                    tv={tv}
+                                    category="connection"
+                                />
                                 <BackendConnection
                                     tv={tv}
                                     label="Backend URL"
@@ -88,7 +114,10 @@ export function Settings({
                                 <DirectAccessProbe tv={tv} />
                             </>
                         ) : id === 'library' ? (
-                            <LibrarySettings tv={tv} />
+                            <>
+                                <ClearHistory tv={tv} />
+                                <LibrarySettings tv={tv} />
+                            </>
                         ) : id === 'appearance' ? (
                             <SettingsPreferences
                                 key={`layout:${phoneRevision}`}
@@ -107,6 +136,8 @@ export function Settings({
                                 tv={tv}
                                 category="playback"
                             />
+                        ) : id === 'subtitles' ? (
+                            <SubtitleSettings tv={tv} />
                         ) : id === 'metadata' ? (
                             <TmdbSettings
                                 key={`tmdb:${phoneRevision}`}
